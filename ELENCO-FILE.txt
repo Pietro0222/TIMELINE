@@ -1,0 +1,32 @@
+SIMBOLI DELLE EPOCHE — barra in alto
+
+COME INSERIRLI
+1. Salva un file per ogni epoca in questa cartella, con esattamente questi nomi:
+
+   alta.svg          Alta Repubblica
+   caduta.svg        Caduta della Repubblica
+   impero.svg        Regno dell'Impero
+   ribellione.svg    Era della Ribellione
+   nuova.svg         Nuova Repubblica
+   ordine.svg        Ascesa del Primo Ordine
+   fuori.svg         Fuori cronologia
+   vecchia.svg       Vecchia Repubblica (Legends)
+
+2. Ricarica la pagina. Non serve toccare il codice.
+
+REQUISITI DEL FILE
+- SVG o PNG con SFONDO TRASPARENTE, quadrato, almeno 64x64 px.
+- Deve essere una sagoma piena: conta solo la forma, non il colore.
+  Il simbolo viene ridipinto con il colore della sua epoca.
+- Niente cornici o riquadri intorno: la tessera ha gia il suo bordo.
+
+SE USI PNG
+Cerca simboli/${g.chiave}.svg nel file HTML e cambia .svg in .png.
+
+SE VUOI I COLORI ORIGINALI
+Nel file HTML cerca TINTA_SIMBOLI = true e mettilo a false.
+In quel caso servono immagini gia colorate, chiare, su fondo trasparente.
+
+SE UN FILE MANCA
+Resta un cerchio vuoto del colore dell'epoca. Niente si rompe, puoi
+aggiungerli uno alla volta.
