@@ -154,8 +154,35 @@ body{
   background:linear-gradient(to bottom,
     color-mix(in srgb,var(--c) 15%,transparent),
     color-mix(in srgb,var(--c) 4%,transparent));
+  overflow:hidden;isolation:isolate;
   transform-origin:center bottom;
-  transition:border-color .2s ease,background .2s ease,transform .22s cubic-bezier(.3,.8,.3,1);
+  transition:border-color .2s ease,background .2s ease,box-shadow .25s ease,transform .22s cubic-bezier(.3,.8,.3,1);
+}
+/* La velatura avanza insieme allo scroll della sezione. Le epoche gia'
+   percorse restano piene, quella corrente mostra la posizione esatta. */
+.seg::before{
+  content:"";position:absolute;z-index:0;inset:1px;
+  border-radius:9px;pointer-events:none;
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--c) 28%,transparent),
+    color-mix(in srgb,var(--c) 17%,transparent));
+  transform:scaleX(var(--epoca-progress,0));transform-origin:left center;
+  will-change:transform;
+}
+.seg>*{position:relative;z-index:1}
+.seg[aria-current="true"]{
+  border-color:color-mix(in srgb,var(--c) 88%,#fff 12%);
+  box-shadow:0 0 10px color-mix(in srgb,var(--c) 54%,transparent),
+             0 0 22px color-mix(in srgb,var(--c) 24%,transparent),
+             inset 0 0 10px color-mix(in srgb,var(--c) 14%,transparent);
+}
+.seg.epoca-completa{
+  border-color:color-mix(in srgb,var(--c) 62%,#DCE7F4 8%);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 17%,transparent),
+             0 0 8px color-mix(in srgb,var(--c) 13%,transparent);
+}
+.seg[aria-current="true"] .sigillo{
+  opacity:1;filter:drop-shadow(0 0 9px color-mix(in srgb,var(--c) 70%,transparent));
 }
 .sigillo{align-self:center;
   width:calc(46px - 20px*var(--p));height:calc(46px - 20px*var(--p));
@@ -238,6 +265,20 @@ body{
 .search::placeholder{color:var(--ink-faint)}
 .search:focus{outline:none;border-color:var(--line-strong);
   box-shadow:0 0 0 3px rgba(148,178,206,.09)}
+.filters{display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding:1px 0 2px;
+  scrollbar-width:none;overscroll-behavior-x:contain}
+.filters::-webkit-scrollbar{display:none}
+.filter-btn{flex:0 0 auto;border:1px solid var(--line);border-radius:6px;
+  padding:5px 9px;background:rgba(9,14,24,.68);color:var(--ink-faint);
+  font-family:var(--display);font-size:11.5px;font-weight:600;line-height:1.15;
+  letter-spacing:.035em;cursor:pointer;touch-action:manipulation;
+  transition:color .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease,opacity .18s ease}
+.filter-btn[aria-pressed="true"]{color:var(--ink);border-color:var(--line-strong);
+  background:rgba(148,178,206,.16);
+  box-shadow:0 0 11px rgba(148,178,206,.13),inset 0 0 8px rgba(148,178,206,.05)}
+.filter-btn[aria-pressed="false"]{opacity:.46;background:rgba(3,5,11,.5)}
+.filter-btn:hover,.filter-btn:focus-visible{border-color:#7890A8;color:var(--ink)}
+.filter-btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .tally{font-family:var(--display);font-size:14px;color:var(--ink-faint);
   padding-top:9px;letter-spacing:.02em;min-height:19px}
 .tally:empty{padding-top:0;min-height:0}
@@ -316,6 +357,9 @@ body{
 .item.legends .yr{color:var(--ink-faint)}
 .title{font-family:var(--display);font-size:20px;font-weight:600;line-height:1.15;
   margin:2px 0 6px;display:block}
+.stagioni{display:block;margin:-1px 0 7px;color:color-mix(in srgb,var(--c) 62%,#C9D6E5 38%);
+  font-family:var(--display);font-size:12px;font-weight:600;line-height:1.2;
+  letter-spacing:.055em;text-transform:uppercase}
 .meta{display:flex;flex-wrap:wrap;font-size:13.5px;color:var(--ink-dim);line-height:1.3}
 .meta span{padding:0 9px}
 .meta span:first-child{padding-left:0}
@@ -354,7 +398,7 @@ body{
 /* --------- serie (live-action o animate): al centro come i film, ma
    piu' piccole, per mettere in luce la gerarchia (film > serie > resto).
    L'immagine sta di lato al testo (come le voci normali), non sopra --------- */
-.item.serie{width:min(484px,100%);margin:10px auto;align-self:center}
+.item.serie{width:min(500px,100%);margin:10px auto;align-self:center}
 .item.serie::after{display:none}
 .item.serie::before{left:50%;right:auto;top:-7px;width:14px;height:14px;
   transform:translateX(-50%);background:var(--bg);border:2px solid var(--c);
@@ -367,8 +411,22 @@ body{
 .item.serie .title{font-size:18.7px;font-weight:700;letter-spacing:-.005em;line-height:1.12}
 .item.serie .yr{font-size:13.75px}
 
-/* ------ videogiochi: al centro come film/serie, ma un gradino sotto
-   ("film > serie > gioco > resto") ------ */
+/* ---------------- corti: sotto le serie, sopra i videogiochi ----------- */
+.item.corto{width:min(400px,100%);margin:8px auto;align-self:center}
+.item.corto::after{display:none}
+.item.corto::before{left:50%;right:auto;top:-6px;width:12px;height:12px;
+  transform:translateX(-50%);background:var(--bg);border:1.75px solid var(--c);
+  box-shadow:0 0 14px -1px var(--c)}
+.item.corto .head{border-color:color-mix(in srgb,var(--c) 26%,transparent);
+  background:linear-gradient(to bottom,rgba(9,14,24,.6),
+             color-mix(in srgb,var(--c) 7%,rgba(9,14,24,.88)))}
+.item.corto .head:hover{border-color:color-mix(in srgb,var(--c) 52%,transparent)}
+.item.corto .shot{width:118px}
+.item.corto .title{font-size:17.3px;font-weight:700;letter-spacing:-.003em;line-height:1.12}
+.item.corto .yr{font-size:12.5px}
+
+/* ------ videogiochi: ultimo gradino della gerarchia centrale
+   ("film > serie > corto > gioco") ------ */
 .item.gioco{width:min(340px,100%);margin:8px auto;align-self:center}
 .item.gioco::after{display:none}
 .item.gioco::before{left:50%;right:auto;top:-6px;width:11px;height:11px;
@@ -386,6 +444,151 @@ body{
 .item.gioco .yr{font-size:11px}
 .item.gioco .meta{justify-content:center;color:#A9BDD1}
 
+/* =============== linguaggio visivo della gerarchia ==================== */
+/* Film: cornice doppia, luce piu' presente e nodo a doppio anello. */
+.item.film .head{
+  border-color:color-mix(in srgb,var(--c) 58%,transparent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent),
+             0 0 46px -14px color-mix(in srgb,var(--c) 88%,transparent),
+             0 0 72px -34px color-mix(in srgb,var(--c) 74%,transparent),
+             inset 0 0 38px color-mix(in srgb,var(--c) 13%,transparent)
+}
+.item.film .head:hover{border-color:color-mix(in srgb,var(--c) 86%,transparent)}
+.item.film::before{
+  outline:1px solid color-mix(in srgb,var(--c) 74%,transparent);outline-offset:3px;
+  box-shadow:0 0 30px 3px color-mix(in srgb,var(--c) 52%,transparent)
+}
+.item.film .title{text-shadow:0 0 20px color-mix(in srgb,var(--c) 52%,transparent)}
+
+/* Serie TV: cornice continua e barra laterale, come un capitolo lungo. */
+.item.serie .head{
+  border-style:solid;
+  box-shadow:inset 3px 0 0 color-mix(in srgb,var(--c) 62%,transparent)
+}
+.item.serie::before{background:color-mix(in srgb,var(--c) 34%,var(--bg))}
+
+/* Corti: cornice tratteggiata, immagine leggermente piu' sobria e nodo
+   a rombo, leggibile anche quando la timeline e' molto compatta. */
+.item.corto .head{border-style:dashed;box-shadow:none}
+.item.corto::before{border-radius:2px;transform:translateX(-50%) rotate(45deg)}
+.item.corto .shot img{filter:saturate(.78) contrast(1.05)}
+
+/* Videogiochi: angoli tecnici, trama HUD appena visibile e nodo esagonale. */
+.item.gioco .head{
+  border-radius:2px;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,
+    100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+  background:
+    repeating-linear-gradient(0deg,transparent 0 15px,
+      color-mix(in srgb,var(--c) 5%,transparent) 15px 16px),
+    linear-gradient(to bottom,rgba(9,14,24,.68),
+      color-mix(in srgb,var(--c) 8%,rgba(9,14,24,.9)))
+}
+.item.gioco::before{
+  border:0;border-radius:0;background:var(--c);
+  clip-path:polygon(25% 0,75% 0,100% 25%,100% 75%,75% 100%,25% 100%,0 75%,0 25%)
+}
+.item.gioco .shot:not(.vuoto)::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(to bottom,transparent 0 5px,
+    rgba(210,230,255,.035) 5px 6px)
+}
+
+/* Badge: stessa tinta dell'epoca, forma diversa per ciascun livello. */
+.item.film .meta span:first-child,
+.item.serie .meta span:first-child,
+.item.corto .meta span:first-child,
+.item.gioco .meta span:first-child{
+  color:var(--c);font-family:var(--display);font-weight:600;
+  letter-spacing:.065em;text-transform:uppercase;margin-right:8px;padding:1px 7px
+}
+.item.film .meta span:first-child{
+  border-top:1px solid color-mix(in srgb,var(--c) 65%,transparent);
+  border-bottom:1px solid color-mix(in srgb,var(--c) 65%,transparent);
+  background:color-mix(in srgb,var(--c) 7%,transparent)
+}
+.item.serie .meta span:first-child{
+  border:1px solid color-mix(in srgb,var(--c) 46%,transparent);border-radius:999px;
+  background:color-mix(in srgb,var(--c) 8%,transparent)
+}
+.item.corto .meta span:first-child{
+  border:1px dashed color-mix(in srgb,var(--c) 55%,transparent);border-radius:2px
+}
+.item.gioco .meta span:first-child{
+  border:1px solid color-mix(in srgb,var(--c) 42%,transparent);border-radius:0;
+  clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
+  background:color-mix(in srgb,var(--c) 9%,transparent)
+}
+
+/* Nei livelli intermedi il titolo resta il primo elemento da leggere;
+   categoria e pubblicazione conservano la forma, ma arretrano di tono. */
+.item:is(.serie,.corto,.gioco) .title{
+  color:#F1F6FD;font-weight:700;
+  text-shadow:0 0 13px rgba(226,234,244,.16)
+}
+.item.serie .title{font-size:23px}
+.item.corto .title{font-size:20.5px}
+.item.gioco .title{font-size:18.5px}
+.item:is(.serie,.corto,.gioco) .meta{font-size:11.5px;opacity:.7}
+.item:is(.serie,.corto,.gioco) .meta span:first-child{
+  padding:1px 6px;margin-right:6px;letter-spacing:.045em
+}
+
+/* Etichette delle opere editoriali: solo tipografia, senza badge o
+   modifiche ai riquadri. La tinta dell'epoca resta volutamente tenue. */
+.item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
+  [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .title{
+  color:#EDF4FC;font-size:21.5px;font-weight:600;line-height:1.12;
+  text-shadow:0 0 11px rgba(226,234,244,.12)
+}
+.item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
+  [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .meta{
+  color:var(--ink-faint);font-size:11.5px;opacity:.7
+}
+.item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
+  [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .meta span:first-child{
+  color:color-mix(in srgb,var(--c) 40%,var(--ink-dim));text-transform:uppercase
+}
+.item[data-opera-tipo="romanzo"] .meta span:first-child{
+  font-family:var(--body);font-weight:600;letter-spacing:.08em;
+  font-variant-caps:normal
+}
+.item[data-opera-tipo="fumetto"] .meta span:first-child{
+  font-family:var(--display);font-weight:700;letter-spacing:.055em;
+  text-decoration-line:underline;text-decoration-thickness:1px;
+  text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--c) 42%,transparent)
+}
+.item[data-opera-tipo="manga"] .meta span:first-child{
+  font-family:var(--display);font-weight:500;letter-spacing:.18em
+}
+.item[data-opera-tipo="audiolibro"] .meta span:first-child{
+  font-family:var(--body);font-weight:500;font-style:italic;letter-spacing:.055em
+}
+.mobile-expand{display:none}
+.back-top{
+  position:fixed;z-index:45;right:24px;bottom:24px;width:48px;height:48px;
+  display:grid;place-items:center;padding:0;border-radius:50%;cursor:pointer;
+  border:1px solid rgba(148,178,206,.42);color:#C9DAEC;
+  background:rgba(7,12,21,.9);backdrop-filter:blur(10px);
+  box-shadow:0 8px 25px rgba(0,0,0,.34),0 0 18px rgba(120,160,205,.1);
+  opacity:0;visibility:hidden;pointer-events:none;
+  transform:translateY(10px) scale(.9);
+  transition:opacity .2s ease,visibility .2s ease,transform .2s ease,
+    border-color .2s ease,box-shadow .2s ease
+}
+.back-top.visibile{opacity:1;visibility:visible;pointer-events:auto;
+  transform:translateY(0) scale(1)}
+.back-top:hover,.back-top:focus-visible{border-color:#AFC8E0;
+  box-shadow:0 8px 25px rgba(0,0,0,.34),0 0 22px rgba(150,190,230,.25)}
+.back-top:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.back-top span{position:relative;display:block;width:18px;height:20px;transform:translate(-1.5px,2px)}
+.back-top span::before,.back-top span::after{
+  content:"";position:absolute;left:4.5px;width:9px;height:9px;
+  border-top:2px solid currentColor;border-left:2px solid currentColor;
+  transform:rotate(45deg)
+}
+.back-top span::before{top:1px}
+.back-top span::after{top:9px}
 #list{min-height:calc(100vh - var(--bar-h))}
 .empty{padding:64px 0;color:var(--ink-dim);max-width:44ch}
 .empty b{font-family:var(--display);font-size:21px;font-weight:600;color:var(--ink);
@@ -394,22 +597,75 @@ footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
   color:var(--ink-faint);font-size:13.5px;max-width:64ch}
 code{font-size:.92em;color:var(--ink-dim)}
 
+/* Su desktop romanzi, fumetti e manga consecutivi occupano colonne
+   opposte: li sovrapponiamo parzialmente in verticale per sfruttare
+   quello spazio senza avvicinare le opere centrali piu' importanti. */
+@media (min-width:701px){
+  .item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],[data-opera-tipo="manga"])
+  +.item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],[data-opera-tipo="manga"]){
+    margin-top:-80px
+  }
+}
+
 /* sotto i 700px la linea si sposta a sinistra: una colonna sola */
 @media (max-width:700px){
   .items{gap:18px}
   .items::before{left:14px}
-  .item,.item.film,.item.serie,.item.gioco{width:calc(100% - 40px);margin:0 0 0 40px;align-self:stretch}
+  .item,.item.film,.item.serie,.item.corto,.item.gioco{width:calc(100% - 40px);margin:0 0 0 40px;align-self:stretch}
+  .item.serie{width:calc(88% - 35px)}
+  .item.corto{width:calc(76% - 30px)}
+  .item.gioco{width:calc(68% - 27px)}
   .item::after,.item.sx::after,.item.dx::after{left:-26px;right:auto;width:26px}
   .item::before,.item.sx::before,.item.dx::before{left:-31px;right:auto;top:31px;transform:none}
-  .item.film::after,.item.serie::after,.item.gioco::after{display:block;left:-18.5px;width:18.5px}
-  .item.film::before,.item.serie::before,.item.gioco::before{left:-33.5px;top:29px;width:15px;height:15px;transform:none}
+  .item.film::after,.item.serie::after,.item.corto::after,.item.gioco::after{display:block;left:-18.5px;width:18.5px}
+  .item.film::before,.item.serie::before,.item.corto::before,.item.gioco::before{left:-33.5px;top:29px;width:15px;height:15px;transform:none}
   .item.sx .head{flex-direction:row}
-  .item.sx .txt,.item.film .txt,.item.serie .txt,.item.gioco .txt{text-align:left}
-  .item.sx .meta,.item.film .meta,.item.serie .meta,.item.gioco .meta{justify-content:flex-start}
-  .item.film .txt,.item.serie .txt,.item.gioco .txt{padding:14px 15px 16px}
+  .item.sx .txt,.item.film .txt,.item.serie .txt,.item.corto .txt,.item.gioco .txt{text-align:left}
+  .item.sx .meta,.item.film .meta,.item.serie .meta,.item.corto .meta,.item.gioco .meta{justify-content:flex-start}
+  .item.film .txt,.item.serie .txt,.item.corto .txt,.item.gioco .txt{padding:14px 15px 16px}
   .group-head h2{justify-content:flex-start}
   .group-head .g-date{text-align:left;margin-left:50px}
   .group-head .aurebesh{text-align:left;margin-left:50px}
+  .item[data-opera-tipo="romanzo"] .head,
+  .item[data-opera-tipo="fumetto"] .head,
+  .item[data-opera-tipo="manga"] .head,
+  .item[data-opera-tipo="audiolibro"] .head{
+    transform:scale(var(--scala-scheda-mobile,.6));transform-origin:left top;
+    transition:transform .22s ease;cursor:pointer;touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent
+  }
+  .item[data-opera-tipo="romanzo"],
+  .item[data-opera-tipo="fumetto"],
+  .item[data-opera-tipo="manga"],
+  .item[data-opera-tipo="audiolibro"]{
+    margin-bottom:-5px;transition:height .22s ease,margin-bottom .22s ease
+  }
+  .item.mobile-ingrandita[data-opera-tipo="romanzo"] .head,
+  .item.mobile-ingrandita[data-opera-tipo="fumetto"] .head,
+  .item.mobile-ingrandita[data-opera-tipo="manga"] .head,
+  .item.mobile-ingrandita[data-opera-tipo="audiolibro"] .head{
+    transform:scale(var(--scala-scheda-mobile,.96))
+  }
+  .item.mobile-ingrandita[data-opera-tipo="romanzo"],
+  .item.mobile-ingrandita[data-opera-tipo="fumetto"],
+  .item.mobile-ingrandita[data-opera-tipo="manga"],
+  .item.mobile-ingrandita[data-opera-tipo="audiolibro"]{margin-bottom:0}
+  .item.corto::before{transform:rotate(45deg)}
+  .mobile-expand{
+    display:grid;place-items:center;position:absolute;z-index:3;top:auto;bottom:7px;
+    right:calc(40% + 6px);width:16px;height:16px;border-radius:4px;
+    border:1px solid color-mix(in srgb,var(--c) 62%,transparent);
+    background:rgba(3,5,11,.9);color:var(--c);font-family:var(--display);
+    font-size:12.5px;font-weight:600;line-height:1;pointer-events:none;
+    box-shadow:0 0 7px color-mix(in srgb,var(--c) 15%,transparent);
+    transition:right .22s ease,border-color .22s ease,box-shadow .22s ease
+  }
+  .mobile-expand::before{content:"+";transform:translateY(-1px)}
+  .item.mobile-ingrandita .mobile-expand{
+    right:calc(4% + 6px);border-color:color-mix(in srgb,var(--c) 82%,transparent);
+    box-shadow:0 0 10px color-mix(in srgb,var(--c) 26%,transparent)
+  }
+  .item.mobile-ingrandita .mobile-expand::before{content:"−"}
 }
 @media (max-width:560px){
   .wrap{padding:0 15px 90px}
@@ -419,6 +675,8 @@ code{font-size:.92em;color:var(--ink-dim)}
   .title{font-size:18.5px}
   .item.film .title{font-size:21px}
   .shot{width:87px;border-radius:6px}
+  .back-top{right:14px;bottom:calc(14px + env(safe-area-inset-bottom));
+    width:44px;height:44px}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
@@ -454,7 +712,17 @@ code{font-size:.92em;color:var(--ink-dim)}
 
   <div class="controls">
     <input class="search" id="q" type="search" placeholder="Cerca un titolo" aria-label="Cerca un titolo">
-    <div class="tally" id="tally"></div>
+    <div class="filters" id="filters" aria-label="Filtra per tipologia">
+      <button class="filter-btn" type="button" data-filter="film" aria-pressed="true">Film</button>
+      <button class="filter-btn" type="button" data-filter="serie" aria-pressed="true">Serie TV</button>
+      <button class="filter-btn" type="button" data-filter="corto" aria-pressed="true">Corti</button>
+      <button class="filter-btn" type="button" data-filter="gioco" aria-pressed="true">Videogiochi</button>
+      <button class="filter-btn" type="button" data-filter="romanzo" aria-pressed="true">Romanzi</button>
+      <button class="filter-btn" type="button" data-filter="fumetto" aria-pressed="true">Fumetti</button>
+      <button class="filter-btn" type="button" data-filter="manga" aria-pressed="true">Manga</button>
+      <button class="filter-btn" type="button" data-filter="audiolibro" aria-pressed="true">Audiolibri</button>
+    </div>
+    <div class="tally" id="tally" aria-live="polite"></div>
   </div>
 
   <main id="list"></main>
@@ -467,12 +735,17 @@ code{font-size:.92em;color:var(--ink-dim)}
   </footer>
 </div>
 
+<button class="back-top" id="backTop" type="button" aria-label="Torna all'inizio">
+  <span aria-hidden="true"></span>
+</button>
+
 <script>
 /* =========================================================================
    DATI — una riga per opera.
    y  anno interno (negativo = BBY)   yl etichetta anno
    r  anno di uscita                  rl etichetta uscita
    t  film | serie | animazione | romanzo | fumetto | gioco
+   stagioni | dettaglio  sottotitolo opzionale per stagioni, volumi o numeri
    e  id epoca      lg true = Legends      img file dentro immagini/
    ========================================================================= */
 
@@ -483,12 +756,12 @@ const ERE = [
   {id:"impero",    nome:"Regno dell'Impero",       span:"19 – 5 BBY",      breve:"Regno\ndell'Impero", c:"#E23A4E"},
   {id:"ribellione",nome:"Era della Ribellione",    span:"5 BBY – 4 ABY",   breve:"Era della\nRibellione", c:"#E86F4B"},
   {id:"nuova",     nome:"Nuova Repubblica",        span:"4 – 34 ABY",      breve:"Nuova\nRepubblica", c:"#58C08A"},
-  {id:"ordine",    nome:"Ascesa del Primo Ordine", span:"34 – 35 ABY",     breve:"Primo\nOrdine", c:"#8F1E3A"},
+  {id:"ordine",    nome:"Ascesa del Primo Ordine", span:"34 – 35 ABY",     breve:"Ascesa del\nPrimo Ordine", c:"#E33161"},
   {id:"fuori",     nome:"Raccolte Antologiche",    span:"",       breve:"Raccolte\nAntologiche", c:"#4FB3D9"}
 ];
 
 const OPERE = [
-  {ti:"Young Jedi Adventures", y:-232, yl:"233 – 232 BBY", r:2023, rl:"2023", t:"animazione", e:"alta", img:"young-jedi-adventures.jpg",
+  {ti:"Young Jedi Adventures", y:-232, yl:"233 – 232 BBY", r:2023, rl:"2023", t:"animazione", stagioni:"Stagioni 1 e 2", e:"alta", img:"young-jedi-adventures.jpg",
    n:"Serie animata per bambini ambientata all'Accademia Jedi dell'Alta Repubblica."},
   {ti:"L'Alta Repubblica – Nell'Oscurità", y:-230, yl:"232 BBY", r:2021, rl:"2021", t:"romanzo", e:"alta", img:"nell-oscurita.jpg",
    n:"Romanzo che segue un gruppo di sopravvissuti al disastro della Legacy Run, alle prese con un pericolo che li ha seguiti fin sull'avamposto di Starlight."},
@@ -646,39 +919,49 @@ const OPERE = [
    n:"One-shot della serie antologica Storie dall'Iperspazio."},
   {ti:"L'Età della Repubblica – Eroi: Anakin Skywalker", y:-22, yl:"22 BBY", r:2019, rl:"2019", t:"fumetto", e:"caduta", img:"eta-repubblica-eroi.jpg",
    n:"Antologia di quattro one-shot su Qui-Gon Jinn, Obi-Wan Kenobi, Anakin Skywalker e Padmé Amidala nell'epoca della Repubblica."},
-  {ti:"The Clone Wars – Il film", y:-22, yl:"22 BBY", r:2008, rl:"2008", t:"animazione", e:"caduta", img:"clone-wars-film.jpg",
+  {ti:"The Clone Wars – Il film", y:-22, yl:"22 BBY", r:2008, rl:"2008", t:"animazione", tipoLabel:"Film", e:"caduta", img:"clone-wars-film.jpg",
    n:"Pilota cinematografico della serie animata: presenta Ahsoka Tano come padawan di Anakin."},
-  {ti:"The Clone Wars", y:-22, yl:"22 – 19 BBY", r:2008, rl:"2008 – 2020", t:"animazione", e:"caduta", img:"the-clone-wars.jpg",
-   n:"Sette stagioni che riempiono lo spazio tra l'Episodio II e il III: il blocco narrativo più esteso del canone."},
+  {ti:"The Clone Wars", y:-22, yl:"22 BBY", r:2008, rl:"2008 – 2020", t:"animazione", stagioni:"Stagioni 1 e 2", e:"caduta", img:"the-clone-wars.jpg",
+   n:"Le prime due stagioni delle Guerre dei Cloni, riunite perché consecutive nella cronologia."},
   {ti:"Tales of the Jedi - Giustizia", y:-68, yl:"68 – 58 BBY", r:2022, rl:"2022", t:"animazione", e:"caduta", img:"tales-of-the-jedi.jpg",
    n:"Sei corti che alternano l'infanzia di Ahsoka alla lenta caduta del Conte Dooku."},
   {ti:"Tales of the Jedi - Vita e Morte", y:-36, yl:"36 – 35 BBY", r:2022, rl:"2022", t:"animazione", e:"caduta", img:"tales-of-the-jedi.jpg",
    n:"Sei corti che alternano l'infanzia di Ahsoka alla lenta caduta del Conte Dooku."},
   {ti:"Tales of the Jedi - La Pratica Rende Perfetti", y:-22, yl:"22 BBY", r:2022, rl:"2022", t:"animazione", e:"caduta", img:"tales-of-the-jedi.jpg",
    n:"Sei corti che alternano l'infanzia di Ahsoka alla lenta caduta del Conte Dooku."},
+  {ti:"The Clone Wars", y:-21.5, yl:"21 BBY", r:2008, rl:"2008 – 2020", t:"animazione", stagioni:"Stagione 3", e:"caduta", img:"the-clone-wars.jpg",
+   n:"La terza stagione di The Clone Wars."},
   {ti:"Tales of the Jedi - Il Signore dei Sith", y:-32, yl:"32 BBY", r:2022, rl:"2022", t:"animazione", e:"caduta", img:"tales-of-the-jedi.jpg",
    n:"Sei corti che alternano l'infanzia di Ahsoka alla lenta caduta del Conte Dooku."},
-  {ti:"Catalizzatore", y:-21, yl:"21 – 17 BBY", r:2016, rl:"2016", t:"romanzo", e:"caduta", img:"catalyst.jpg",
+  {ti:"Catalizzatore", y:-21.6, yl:"21 – 17 BBY", r:2016, rl:"2016", t:"romanzo", e:"caduta", img:"catalyst.jpg",
    n:"Antefatto di Rogue One: come Galen Erso finisce a lavorare al progetto di Krennic."},
-  {ti:"Storie dall'Iperspazio – The Bad Batch: Agenti Fantasma", y:-19, yl:"c. 21 – 19 BBY", r:2025, rl:"2025", t:"fumetto", e:"caduta", img:"storie-iperspazio-bad-batch-agenti-fantasma.jpg",
+  {ti:"The Clone Wars", y:-20.9, yl:"20 BBY", r:2008, rl:"2008 – 2020", t:"animazione", stagioni:"Stagione 4", e:"caduta", img:"the-clone-wars.jpg",
+   n:"La quarta stagione di The Clone Wars."},
+  {ti:"Storie dall'Iperspazio – The Bad Batch: Agenti Fantasma", y:-21.4, yl:"c. 21 – 19 BBY", r:2025, rl:"2025", t:"fumetto", e:"caduta", img:"storie-iperspazio-bad-batch-agenti-fantasma.jpg",
    n:"One-shot sulla Bad Batch nei mesi immediatamente successivi all'Ordine 66."},
-  {ti:"L'Età della Repubblica – Nemici: Generale Grievous", y:-19, yl:"20 BBY", r:2019, rl:"2019", t:"fumetto", e:"caduta", img:"eta-repubblica-nemici.jpg",
+  {ti:"L'Età della Repubblica – Nemici: Generale Grievous", y:-20.8, yl:"20 BBY", r:2019, rl:"2019", t:"fumetto", e:"caduta", img:"eta-repubblica-nemici.jpg",
    n:"Antologia di one-shot dedicati a Darth Maul, Jango Fett, Conte Dooku e il Generale Grievous."},
-  {ti:"Tales of the Empire - Il Cammino della Paura", y:-19, yl:"20 BBY", r:2024, rl:"2024", t:"animazione", e:"caduta", img:"tales-of-the-empire.jpg",
+  {ti:"Tales of the Empire - Il Cammino della Paura", y:-20.7, yl:"20 BBY", r:2024, rl:"2024", t:"animazione", e:"caduta", img:"tales-of-the-empire.jpg",
    n:"Sei corti su due percorsi opposti sotto l'Impero: Morgan Elsbeth e Barriss Offee."},
-  {ti:"Kanan - L'ultimo padawan", y:-19, yl:"20 – 18 BBY", r:2015, rl:"2015 – 2016", t:"fumetto", e:"caduta", img:"kanan.jpg",
+  {ti:"The Clone Wars", y:-20.6, yl:"20 BBY", r:2008, rl:"2008 – 2020", t:"animazione", stagioni:"Stagione 5", e:"caduta", img:"the-clone-wars.jpg",
+   n:"La quinta stagione di The Clone Wars."},
+  {ti:"The Clone Wars", y:-20.4, yl:"19 BBY", r:2008, rl:"2008 – 2020", t:"animazione", stagioni:"Stagione 6", e:"caduta", img:"the-clone-wars.jpg",
+   n:"La sesta stagione di The Clone Wars."},
+  {ti:"Kanan - L'ultimo padawan", y:-19.85, yl:"19 – 4 BBY", r:2015, rl:"2015 – 2016", t:"fumetto", e:"caduta", img:"kanan.jpg",
    n:"Come il padawan Caleb Dume sopravvive all'Ordine 66 e diventa il Kanan Jarrus di Rebels."},
-  {ti:"Thrawn: L'Ascendenza – Insorge il Caos", y:-19, yl:"19 BBY", r:2021, rl:"2021", t:"romanzo", e:"caduta", img:"ascendenza-insorge-il-caos.jpg",
+  {ti:"Thrawn: L'Ascendenza – Insorge il Caos", y:-20.5, yl:"19 BBY", r:2021, rl:"2021", t:"romanzo", e:"caduta", img:"ascendenza-insorge-il-caos.jpg",
    n:"Primo romanzo della Trilogia dell'Ascendenza: le origini di Thrawn nello Spazio Ignoto, prima del suo ingresso nei ranghi imperiali."},
-  {ti:"Zero Company", y:-19, yl:"19 BBY", r:2026, rl:"2026", t:"gioco", e:"caduta", img:"zero-company.jpg",
+  {ti:"Zero Company", y:-20.3, yl:"19 BBY", r:2026, rl:"2026", t:"gioco", e:"caduta", img:"zero-company.jpg",
    n:"Videogioco tattico su una squadra clandestina di soldati della Repubblica durante le Guerre dei Cloni."},
-  {ti:"L'Apprendista del Lato Oscuro", y:-19, yl:"19 BBY", r:2015, rl:"2015", t:"romanzo", e:"caduta", img:"dark-disciple.jpg",
+  {ti:"L'Apprendista del Lato Oscuro", y:-20.2, yl:"19 BBY", r:2015, rl:"2015", t:"romanzo", e:"caduta", img:"dark-disciple.jpg",
    n:"Ricavato da episodi mai animati: Quinlan Vos e Asajj Ventress ricevono l'incarico di uccidere Dooku."},
-  {ti:"Darth Maul – Figlio di Dathomir", y:-19, yl:"19 BBY", r:2016, rl:"2016", t:"fumetto", e:"caduta", img:"darth-maul-figlio-dathomir.jpg",
+  {ti:"Darth Maul – Figlio di Dathomir", y:-20.1, yl:"19 BBY", r:2016, rl:"2016", t:"fumetto", e:"caduta", img:"darth-maul-figlio-dathomir.jpg",
    n:"Seguito diretto degli archi non prodotti di The Clone Wars su Maul, Ventress e le Sorelle della Notte di Dathomir."},
-  {ti:"L'Età della Repubblica – Eroi: Padmé Amidala", y:-19, yl:"19 BBY", r:2019, rl:"2019", t:"fumetto", e:"caduta", img:"eta-repubblica-eroi.jpg",
+  {ti:"L'Età della Repubblica – Eroi: Padmé Amidala", y:-20, yl:"19 BBY", r:2019, rl:"2019", t:"fumetto", e:"caduta", img:"eta-repubblica-eroi.jpg",
    n:"Antologia di quattro one-shot su Qui-Gon Jinn, Obi-Wan Kenobi, Anakin Skywalker e Padmé Amidala nell'epoca della Repubblica."},
-  {ti:"Episodio III – La vendetta dei Sith", y:-19, yl:"19 BBY", r:2005, rl:"2005", t:"film", e:"caduta", img:"episodio-3.jpg",
+  {ti:"The Clone Wars", y:-19.9, yl:"19 BBY", r:2020, rl:"2020", t:"animazione", stagioni:"Stagione 7", e:"caduta", img:"the-clone-wars.jpg",
+   n:"La settima e ultima stagione di The Clone Wars."},
+  {ti:"Episodio III – La vendetta dei Sith", y:-19.8, yl:"19 BBY", r:2005, rl:"2005", t:"film", e:"caduta", img:"episodio-3.jpg",
    n:"L'Ordine 66, la fine della Repubblica e la nascita di Darth Vader."},
   {ti:"Tales of the Underworld - Una Bella Vita", y:-62, yl:"62 – 33 BBY", r:2025, rl:"2025", t:"animazione", e:"caduta", img:"tales-of-the-underworld.jpg",
    n:"Antologia di corti animati su alcuni dei personaggi più loschi della galassia."},
@@ -714,7 +997,8 @@ const OPERE = [
    n:"Antologia di one-shot dedicati a Darth Maul, Jango Fett, Conte Dooku e il Generale Grievous."},
   {ti:"Dooku – Un Jedi Perduto", y:-23, yl:"23 BBY", r:2024, rl:"2024", t:"romanzo", e:"caduta", img:"dooku-jedi-perduto.jpg",
    n:"Audio-dramma sulla vita di Dooku prima della sua caduta al Lato Oscuro, dagli anni da Jedi al distacco dall'Ordine."},
-
+  {ti:"The Bad Batch", y:-19, yl:"19 BBY", r:2021, rl:"2021 – 2024", t:"animazione", stagioni:"Stagione 1", e:"impero", img:"the-bad-batch.jpg",
+   n:"La prima stagione di The Bad Batch."},
   {ti:"Darth Vader (2017) Vol. 1 – Macchina Imperiale", y:-19, yl:"19 BBY", r:2017, rl:"2017", t:"fumetto", e:"impero", img:"vader-signore-oscuro.jpg",
    n:"I primissimi giorni di Vader, dalla costruzione della sua spada laser alla caccia ai Jedi sopravvissuti."},
   {ti:"Tales of the Empire - Lealtà", y:-19, yl:"19 BBY", r:2024, rl:"2024", t:"animazione", e:"impero", img:"tales-of-the-empire.jpg",
@@ -723,10 +1007,10 @@ const OPERE = [
    n:"Sei corti che alternano l'infanzia di Ahsoka alla lenta caduta del Conte Dooku."},
   {ti:"Darth Vader (2017) Vol. 2 – La Luce Morente", y:-19, yl:"19 BBY", r:2018, rl:"2018", t:"fumetto", e:"impero", img:"vader-luce-morente.jpg",
    n:"Secondo arco della serie regolare Darth Vader (2017)."},
-  {ti:"The Bad Batch", y:-19, yl:"19 – 18 BBY", r:2021, rl:"2021 – 2024", t:"animazione", e:"impero", img:"the-bad-batch.jpg",
-   n:"Una squadra di cloni difettosi diserta nei mesi successivi all'Ordine 66. Prosegue da The Clone Wars."},
   {ti:"Il Dominio dell'Impero: La Maschera della Paura", y:-19, yl:"19 BBY", r:2026, rl:"2026", t:"romanzo", e:"impero", img:"maschera-della-paura.jpg",
    n:"Romanzo ambientato nei primi anni del Regno dell'Impero."},
+  {ti:"The Bad Batch", y:-19, yl:"19 – 18 BBY", r:2021, rl:"2021 – 2024", t:"animazione", stagioni:"Stagione 2", e:"impero", img:"the-bad-batch-season-2-poster-key-art-2jhfus7_229063d3_fbcb9ea7.jpeg",
+   n:"La seconda stagione di The Bad Batch."},
   {ti:"Tales of the Underworld - Una Via D'Uscita", y:-19, yl:"18 BBY", r:2025, rl:"2025", t:"animazione", e:"impero", img:"tales-of-the-underworld.jpg",
    n:"Antologia di corti animati su alcuni dei personaggi più loschi della galassia."},
   {ti:"Tales of the Underworld - Amici", y:-19, yl:"18 BBY", r:2025, rl:"2025", t:"animazione", e:"impero", img:"tales-of-the-underworld.jpg",
@@ -735,6 +1019,8 @@ const OPERE = [
    n:"Antologia di corti animati su alcuni dei personaggi più loschi della galassia."},
   {ti:"Sanctuary: Un Romanzo della Bad Batch", y:-19, yl:"18 BBY", r:2026, rl:"2026", t:"romanzo", e:"impero", img:"sanctuary-bad-batch.jpg",
    n:"Romanzo dedicato alla Bad Batch, ambientato nei primi anni del Regno dell'Impero."},
+  {ti:"The Bad Batch", y:-19, yl:"18 BBY", r:2021, rl:"2021 – 2024", t:"animazione", stagioni:"Stagione 3", e:"impero", img:"bad batch stagione 3.webp",
+   n:"La terza e ultima stagione di The Bad Batch."},
   {ti:"Darth Vader (2017) Vol. 3 – Mari Infuocati", y:-19, yl:"18 BBY", r:2018, rl:"2018", t:"fumetto", e:"impero", img:"vader-mari-infuocati.jpg",
    n:"Terzo arco della serie regolare Darth Vader (2017)."},
   {ti:"Ahsoka", y:-19, yl:"18 BBY", r:2019, rl:"2019", t:"romanzo", e:"impero", img:"ahsoka-romanzo.jpg",
@@ -759,7 +1045,7 @@ const OPERE = [
    n:"Quarto e ultimo arco della serie regolare Darth Vader (2017)."},
   {ti:"Jedi: Fallen Order", y:-14, yl:"14 BBY", r:2019, rl:"2019", t:"gioco", e:"impero", img:"fallen-order.jpg",
    n:"Cal Kestis, padawan in fuga, braccato dagli Inquisitori. Il gioco che ha imposto gli Inquisitori nel canone."},
-  {ti:"Star Wars Jedi: Fallen Order - Il Manga", y:-14, yl:"14 BBY", r:2026, rl:"2026", t:"manga", e:"impero", img:"fallen-order-manga.jpg",
+  {ti:"Star Wars Jedi: Fallen Order - Il Manga", y:-14, yl:"14 BBY", r:2026, rl:"2026", t:"manga", dettaglio:"4 volumi", e:"impero", img:"fallen-order-manga.jpg",
    n:"Adattamento manga del videogioco Jedi: Fallen Order."},
   {ti:"Jedi: Fallen Order – Il Tempio Oscuro", y:-14, yl:"14 BBY", r:2020, rl:"2020", t:"fumetto", e:"impero", img:"fallen-order-tempio-oscuro.jpg",
    n:"Miniserie che segue la Jedi Sha Koon tra le rovine di un tempio delle Sorelle della Notte, con brevi incursioni nel 14 BBY che anticipano Jedi: Fallen Order."},
@@ -793,14 +1079,14 @@ const OPERE = [
    n:"Secondo volume della serie regolare Han Solo e Chewbacca."},
   {ti:"Stelle Perdute", y:-6, yl:"6 BBY – 5 ABY", r:2016, rl:"2016", t:"romanzo", e:"impero", img:"lost-stars.jpg",
    n:"Due amici d'infanzia entrano nell'accademia imperiale e finiscono su fronti opposti. Attraversa tutta la trilogia originale."},
-  {ti:"Lost Stars", y:-6, yl:"6 BBY – 5 ABY", r:2020, rl:"2020", t:"manga", e:"impero", img:"lost-stars-manga.jpg",
+  {ti:"Lost Stars", y:-6, yl:"6 BBY – 5 ABY", r:2020, rl:"2020", t:"manga", dettaglio:"3 volumi", e:"impero", img:"lost-stars-manga.jpg",
    n:"Adattamento manga del romanzo Stelle Perdute."},
 
-  {ti:"Andor", y:-5, yl:"5 – 1 BBY", r:2022, rl:"2022 – 2025", t:"serie", e:"ribellione", img:"andor.jpg",
-   n:"Cinque anni di cospirazione raccontati dal basso: come si costruisce una ribellione prima che esista un'Alleanza."},
-  {ti:"Star Wars Rebels", y:-5, yl:"5 – 1 BBY", r:2014, rl:"2014 – 2018", t:"animazione", e:"ribellione", img:"rebels.jpg",
-   n:"L'equipaggio della Ghost su Lothal, dalle prime azioni isolate alla nascita dell'Alleanza."},
-  {ti:"Star Wars Rebels – Il Manga", y:-5, yl:"5 BBY", r:2022, rl:"2022", t:"manga", e:"ribellione", img:"rebels-manga.jpg",
+  {ti:"Andor", y:-5, yl:"5 BBY", r:2022, rl:"2022 – 2025", t:"serie", stagioni:"Stagione 1", e:"ribellione", img:"andor.jpg",
+   n:"La prima stagione di Andor."},
+  {ti:"Star Wars Rebels", y:-4.9, yl:"5 – 4 BBY", r:2014, rl:"2014 – 2018", t:"animazione", stagioni:"Stagione 1", e:"ribellione", img:"rebels stagione 1.webp",
+   n:"La prima stagione di Star Wars Rebels."},
+  {ti:"Star Wars Rebels – Il Manga", y:-4.8, yl:"5 BBY", r:2022, rl:"2022", t:"manga", dettaglio:"3 volumi", e:"ribellione", img:"rebels-manga.jpg",
    n:"Adattamento manga della serie animata Star Wars Rebels."},
   {ti:"Rogue One: A Star Wars Story", y:0, yl:"0 BBY", r:2016, rl:"2016", t:"film", e:"ribellione", img:"rogue-one.jpg",
    n:"Il furto dei piani della Morte Nera. Si chiude pochi minuti prima dell'inizio dell'Episodio IV."},
@@ -814,7 +1100,7 @@ const OPERE = [
    n:"Il punto zero della cronologia: la distruzione della Morte Nera dà l'anno di riferimento a tutta la saga."},
   {ti:"Da un Certo Punto di Vista", y:0, yl:"0 ABY", r:2021, rl:"2021", t:"romanzo", e:"ribellione", img:"da-un-certo-punto-di-vista.jpg",
    n:"Antologia di racconti brevi che rilegge gli eventi de Una Nuova Speranza dal punto di vista di personaggi minori e comparse."},
-  {ti:"La Principessa, la Canaglia e il Giovane Fattore", y:0, yl:"1 BBY – 0 ABY", r:2016, rl:"2016", t:"romanzo", e:"ribellione", img:"principessa-canaglia-giovane-fattore.jpg",
+  {ti:"La Principessa, la Canaglia e il Giovane Fattore", y:0, yl:"0 ABY", r:2016, rl:"2016", t:"romanzo", e:"ribellione", img:"principessa-canaglia-giovane-fattore.jpg",
    n:"Romanzo per giovani lettori che segue in parallelo Leia, Han e Luke nei momenti che precedono la loro unione nella Ribellione."},
   {ti:"Principessa Leia", y:0, yl:"0 ABY", r:2015, rl:"2015", t:"fumetto", e:"ribellione", img:"principessa-leia-fumetto.jpg",
    n:"Miniserie in 5 parti su Leia subito dopo la distruzione di Alderaan, in missione per salvare i sopravvissuti del suo popolo."},
@@ -1014,12 +1300,18 @@ const OPERE = [
    n:"Secondo romanzo della Trilogia Aftermath, con Han Solo e Chewbacca nella missione per liberare Kashyyyk."},
   {ti:"Aftermath – La Fine dell'Impero", y:5, yl:"5 ABY", r:2017, rl:"2017", t:"romanzo", e:"ribellione", img:"aftermath-fine-dellimpero.jpg",
    n:"Terzo e ultimo romanzo della Trilogia Aftermath, che culmina nella Battaglia di Jakku."},
-  {ti:"Star Wars Rebels – In Nome della Ribellione", y:-5, yl:"5 – 1 BBY", r:2015, rl:"2015", t:"fumetto", e:"ribellione", img:"rebels-in-nome-della-ribellione.jpg",
+  {ti:"Star Wars Rebels – In Nome della Ribellione", y:-4.7, yl:"5 – 1 BBY", r:2015, rl:"2015", t:"fumetto", e:"ribellione", img:"rebels-in-nome-della-ribellione.jpg",
    n:"Fumetto tie-in con Star Wars Rebels, con l'equipaggio della Ghost alle prese con nuove missioni contro l'Impero."},
+  {ti:"Andor", y:-4.6, yl:"4 – 1 BBY", r:2022, rl:"2022 – 2025", t:"serie", stagioni:"Stagione 2", e:"ribellione", img:"andor stagione 2.webp",
+   n:"La seconda stagione di Andor."},
+  {ti:"Star Wars Rebels", y:-4.5, yl:"4 – 3 BBY", r:2014, rl:"2014 – 2018", t:"animazione", stagioni:"Stagione 2", e:"ribellione", img:"rebels stagione 2.webp",
+   n:"La seconda stagione di Star Wars Rebels."},
   {ti:"Leia – Principessa di Alderaan", y:-3, yl:"3 BBY", r:2018, rl:"2018", t:"romanzo", e:"ribellione", img:"leia-principessa-di-alderaan.jpg",
    n:"Leia sedicenne tra le prove per diventare Signora di Alderaan e i primi passi clandestini nella Ribellione nascente."},
-  {ti:"Leia – Principessa di Alderaan", y:-3, yl:"3 BBY", r:2022, rl:"2022", t:"manga", e:"ribellione", img:"leia-alderaan-manga.jpg",
+  {ti:"Leia – Principessa di Alderaan", y:-3, yl:"3 BBY", r:2022, rl:"2022", t:"manga", dettaglio:"3 volumi", e:"ribellione", img:"leia-alderaan-manga.jpg",
    n:"Adattamento manga del romanzo Leia – Principessa di Alderaan."},
+  {ti:"Star Wars Rebels", y:-3, yl:"2 BBY", r:2014, rl:"2014 – 2018", t:"animazione", stagioni:"Stagione 3", e:"ribellione", img:"rebels stagione 3.webp",
+   n:"La terza stagione di Star Wars Rebels."},
   {ti:"La Storia Segreta di Star Wars: Rogue One – Cassian & K-2SO Special", y:-3, yl:"2 – 1 BBY", r:2018, rl:"2018", t:"fumetto", e:"ribellione", img:"beckett.jpg",
    n:"One-shot autoconclusivo su una missione di Cassian Andor e K-2SO poco prima degli eventi di Rogue One."},
   {ti:"L'Età della Ribellione – Nemici: Darth Vader", y:-3, yl:"2 BBY", r:2019, rl:"2019", t:"fumetto", e:"ribellione", img:"eta-ribellione-nemici.jpg",
@@ -1028,6 +1320,8 @@ const OPERE = [
    n:"Vader e Thrawn indagano insieme su una minaccia, con capitoli alternati che risalgono al primo incontro tra Thrawn e Anakin."},
   {ti:"Thrawn – Alleanze (Fumetto)", y:-3, yl:"1 BBY", r:2024, rl:"2024", t:"fumetto", e:"ribellione", img:"thrawn-alleanze-fumetto.jpg",
    n:"Adattamento a fumetti del romanzo Thrawn – Alleanze."},
+  {ti:"Star Wars Rebels", y:-1.5, yl:"1 BBY", r:2014, rl:"2014 – 2018", t:"animazione", stagioni:"Stagione 4", e:"ribellione", img:"rebels.jpg",
+   n:"La quarta e ultima stagione di Star Wars Rebels."},
   {ti:"Bersaglio Vader", y:-1, yl:"1 BBY", r:2020, rl:"2020", t:"fumetto", e:"ribellione", img:"bersaglio-vader.jpg",
    n:"Miniserie con protagonista il cacciatore di taglie cyborg Beilert Valance, assoldato per eliminare Darth Vader."},
   {ti:"Vader Immortal: A Star Wars VR Series", y:-1, yl:"1 BBY", r:2019, rl:"2019", t:"gioco", e:"ribellione", img:"vader-immortal.jpg",
@@ -1041,12 +1335,16 @@ const OPERE = [
   {ti:"Obi-Wan – Il Fine di un Jedi", y:-1, yl:"1 BBY", r:2023, rl:"2023", t:"fumetto", e:"ribellione", img:"obiwan-il-fine-di-un-jedi.jpg",
    n:"Miniserie in 5 numeri su Obi-Wan Kenobi durante i suoi anni di esilio su Tatooine, a guardia del giovane Luke."},
 
-  {ti:"The Mandalorian", y:9, yl:"9 ABY", r:2019, rl:"2019 – 2023", t:"serie", e:"nuova", img:"the-mandalorian.jpg",
-   n:"Un cacciatore di taglie e un bambino, cinque anni dopo la caduta dell'Impero."},
+  {ti:"The Mandalorian", y:9, yl:"9 ABY", r:2019, rl:"2019 – 2023", t:"serie", stagioni:"Stagione 1", e:"nuova", img:"the-mandalorian.jpg",
+   n:"La prima stagione di The Mandalorian."},
   {ti:"Tales of the Empire - Il Cammino dell'Odio", y:9, yl:"9 ABY", r:2024, rl:"2024", t:"animazione", e:"nuova", img:"tales-of-the-empire.jpg",
    n:"Sei corti su due percorsi opposti sotto l'Impero: Morgan Elsbeth e Barriss Offee."},
+  {ti:"The Mandalorian", y:9, yl:"9 ABY", r:2019, rl:"2019 – 2023", t:"serie", stagioni:"Stagione 2", e:"nuova", img:"MandoStagione2Poster.webp",
+   n:"La seconda stagione di The Mandalorian."},
   {ti:"The Book of Boba Fett", y:9, yl:"9 ABY", r:2021, rl:"2021 – 2022", t:"serie", e:"nuova", img:"boba-fett.jpg",
    n:"Boba prende il posto di Jabba su Tatooine. Contiene due episodi che proseguono The Mandalorian."},
+  {ti:"The Mandalorian", y:9, yl:"9 ABY", r:2019, rl:"2019 – 2023", t:"serie", stagioni:"Stagione 3", e:"nuova", img:"mando stagione 3.jpeg",
+   n:"La terza stagione di The Mandalorian."},
   {ti:"Ahsoka", y:9, yl:"9 ABY", r:2023, rl:"2023", t:"serie", e:"nuova", img:"ahsoka-serie.jpg",
    n:"Seguito diretto di Rebels in live action: la ricerca di Thrawn e di Ezra Bridger."},
   {ti:"Skeleton Crew", y:9, yl:"9 ABY", r:2024, rl:"2024 – 2025", t:"serie", e:"nuova", img:"skeleton-crew.jpg",
@@ -1089,8 +1387,8 @@ const OPERE = [
    n:"Terzo arco narrativo della serie regolare Poe Dameron."},
   {ti:"Poe Dameron Vol. 4 – Leggenda Ritrovata", y:34, yl:"34 ABY", r:2019, rl:"2019", t:"fumetto", e:"nuova", img:"poe-dameron-4-leggenda-ritrovata.jpg",
    n:"Quarto arco narrativo della serie regolare Poe Dameron."},
-  {ti:"Resistance", y:34, yl:"34 ABY", r:2018, rl:"2018 – 2020", t:"serie", e:"nuova", img:"resistance.jpg",
-   n:"Serie animata su una stazione di rifornimento, in parallelo alla trilogia sequel."},
+  {ti:"Resistance", y:34, yl:"34 ABY", r:2018, rl:"2018 – 2020", t:"serie", stagioni:"Stagione 1", e:"nuova", img:"resistance.jpg",
+   n:"La prima stagione di Resistance."},
   {ti:"Storie dall'Iperspazio – Il Decifratore", y:34, yl:"34 ABY", r:2026, rl:"2026", t:"fumetto", e:"nuova", img:"storie-iperspazio-decifratore.jpg",
    n:"One-shot della serie antologica Storie dall'Iperspazio, ambientato negli anni della Resistenza poco prima de Il Risveglio della Forza."},
   {ti:"Phasma", y:34, yl:"34 ABY", r:2017, rl:"2017", t:"romanzo", e:"nuova", img:"phasma.jpg",
@@ -1103,6 +1401,8 @@ const OPERE = [
    n:"Adattamento letterario ufficiale del film Il Risveglio della Forza."},
   {ti:"Il Risveglio della Forza (Fumetto)", y:34, yl:"34 ABY", r:2016, rl:"2016", t:"fumetto", e:"ordine", img:"risveglio-della-forza-fumetto.jpg",
    n:"Miniserie in 6 numeri, adattamento a fumetti del film Il Risveglio della Forza."},
+  {ti:"Resistance", y:34, yl:"34 ABY", r:2018, rl:"2018 – 2020", t:"serie", stagioni:"Stagione 2", e:"ordine", img:"resistance stagione 2.webp",
+   n:"La seconda stagione di Resistance."},
   {ti:"Capitano Phasma", y:34, yl:"34 ABY", r:2017, rl:"2017", t:"fumetto", e:"ordine", img:"capitano-phasma-fumetto.jpg",
    n:"Miniserie parte del Journey to The Last Jedi su come Phasma sia sopravvissuta alla distruzione della Base Starkiller."},
   {ti:"L'Età della Resistenza – Eroi: Rey", y:34, yl:"34 ABY", r:2020, rl:"2020", t:"fumetto", e:"ordine", img:"eta-resistenza-eroi.jpg",
@@ -1169,8 +1469,10 @@ const OPERE = [
   {ti:"L'Alta Repubblica – Racconti di Luce e Vita", y:null, yl:"—", r:2024, rl:"2024", t:"romanzo", e:"fuori", img:"racconti-luce-vita.jpg",
    n:"Raccolta di racconti ambientati lungo tutte e tre le Fasi dell'Alta Repubblica, senza una collocazione precisa nella cronologia."},
 
-  {ti:"Knights of the Old Republic – Remake", y:null, yl:"??? BBY", r:null, rl:"TBD", t:"gioco", e:"vecchia", img:"kotor-remake.jpg",
-   n:"Il remake annunciato del gioco di ruolo originale, ancora privo di una data di uscita confermata."}
+  {ti:"Knights of the Old Republic – Remake", y:-4000, yl:"4000 BBY", r:null, rl:"TBD", t:"gioco", e:"vecchia", img:"kotor-remake.jpg",
+   n:"Il remake annunciato del gioco di ruolo originale, ancora privo di una data di uscita confermata."},
+  {ti:"Fate of the Old Republic", y:-1000, yl:"1000 BBY", r:null, rl:"TBD", t:"gioco", e:"vecchia", img:"fateoftheoldrepublic.jpg",
+   n:"Videogioco ambientato nell'era della Vecchia Repubblica, con data di pubblicazione ancora da definire."}
 ];
 
 /* true: i simboli delle epoche prendono il colore dell'epoca.
@@ -1190,21 +1492,35 @@ const COPERTINE_ATTIVE = true;
    della pagina forza il browser a richiederla di nuovo ogni volta. */
 const CACHE_BUST = Date.now();
 
-const TIPO_LAB = {film:"Film",serie:"Serie TV",animazione:"Animazione",
+const TIPO_LAB = {film:"Film",serie:"Serie TV",animazione:"Animazione",corto:"Corto",
                   romanzo:"Romanzo",fumetto:"Fumetto",gioco:"Videogioco",manga:"Manga",audiolibro:"Audiolibro"};
 
 /* ============================== stato ================================== */
-const state = {q:""};
+const TIPI_FILTRO = ["film","serie","corto","gioco","romanzo","fumetto","manga","audiolibro"];
+const state = {q:"", tipi:new Set(TIPI_FILTRO)};
+const schedeIngrandite = new Set();
+const vistaMobile = matchMedia("(max-width:700px)");
+const SELETTORE_SCHEDE_MOBILI =
+  '.item[data-opera-tipo="romanzo"],.item[data-opera-tipo="fumetto"],.item[data-opera-tipo="manga"],.item[data-opera-tipo="audiolibro"]';
+const SCALA_SCHEDA_CHIUSA = .6;
+const SCALA_SCHEDA_INGRANDITA = SCALA_SCHEDA_CHIUSA * 1.6;
 OPERE.forEach((o,i)=>o.id = slug(o.ti)+"-"+i);
 
 function slug(s){return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
   .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,42)}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 
+function tipoGerarchico(o){
+  if(o.t !== "animazione") return o.t;
+  return /^Tales of the\b/i.test(o.ti) ? "corto" : "serie";
+}
+function etichettaTipo(o){return o.tipoLabel || TIPO_LAB[tipoGerarchico(o)] || TIPO_LAB[o.t]}
+
 function gruppi(){
   const q = state.q.trim().toLowerCase();
   const items = OPERE
-    .filter(o=>!q || (o.ti+" "+o.n+" "+TIPO_LAB[o.t]).toLowerCase().includes(q))
+    .filter(o=>state.tipi.has(tipoGerarchico(o)))
+    .filter(o=>!q || (o.ti+" "+o.n+" "+TIPO_LAB[o.t]+" "+etichettaTipo(o)).toLowerCase().includes(q))
     .sort((a,b)=>{
       if(a.y === null) return 1;
       if(b.y === null) return -1;
@@ -1223,13 +1539,24 @@ const list = document.getElementById("list");
 const ribbon = document.getElementById("ribbon");
 const ribbonNav = document.querySelector(".ribbon");
 const tally = document.getElementById("tally");
+const filters = document.getElementById("filters");
+const backTop = document.getElementById("backTop");
 let osservatore = null;
 
+function aggiornaPulsantiFiltro(){
+  filters.querySelectorAll("[data-filter]").forEach(btn=>
+    btn.setAttribute("aria-pressed", String(state.tipi.has(btn.dataset.filter))));
+}
+
 function render(){
+  aggiornaPulsantiFiltro();
   const gs = gruppi();
   const tot = gs.reduce((n,g)=>n+g.items.length,0);
-  tally.textContent = state.q.trim()
-    ? (tot ? tot + (tot===1?" opera trovata":" opere trovate") : "")
+  const filtriAttivi = state.tipi.size !== TIPI_FILTRO.length;
+  tally.textContent = state.q.trim() || filtriAttivi
+    ? (tot ? tot + (state.q.trim()
+      ? (tot===1?" opera trovata":" opere trovate")
+      : (tot===1?" opera visibile":" opere visibili")) : "")
     : "";
 
   ribbon.innerHTML = gs.map(g=>
@@ -1241,8 +1568,12 @@ function render(){
     </button>`).join("");
 
   if(!tot){
-    list.innerHTML = `<div class="empty"><b>Nessun risultato</b>
-      Prova con una parola più corta o con il titolo originale.</div>`;
+    if(osservatore) osservatore.disconnect();
+    list.innerHTML = state.tipi.size
+      ? `<div class="empty"><b>Nessun risultato</b>
+          Prova con una parola più corta o riattiva una tipologia.</div>`
+      : `<div class="empty"><b>Nessuna tipologia visibile</b>
+          Riattiva almeno uno dei filtri sopra.</div>`;
     return;
   }
 
@@ -1270,37 +1601,67 @@ function render(){
   list.querySelectorAll("img[data-shot]").forEach(im=>{
     im.onerror = ()=>{im.parentElement.classList.add("vuoto"); im.remove();};
   });
+  aggiornaIngombriSchede();
   spia(gs);
 }
 
-/* i film stanno al centro e grandi; le serie (live-action o animate)
-   stanno al centro ma piu' piccole, per segnare la gerarchia visiva;
-   il resto si alterna ai due lati della linea */
+/* film, serie, corti e videogiochi restano centrati con dimensioni
+   decrescenti; romanzi, fumetti, manga e audiolibri si alternano ai lati */
 function lista(items){
   let n = 0;
   return items.map(o=>{
-    const lato = o.t === "film" ? "film"
-      : (o.t === "serie" || o.t === "animazione") ? "serie"
-      : o.t === "gioco" ? "gioco"
+    const tipo = tipoGerarchico(o);
+    const lato = tipo === "film" ? "film"
+      : tipo === "serie" ? "serie"
+      : tipo === "corto" ? "corto"
+      : tipo === "gioco" ? "gioco"
       : (n++ % 2 ? "dx" : "sx");
     return voce(o, lato);
   }).join("");
 }
 
 function voce(o, lato){
-  const meta = [TIPO_LAB[o.t], o.rl].concat(o.lg?["Legends"]:[]);
+  const tipo = tipoGerarchico(o);
+  const tipoLab = etichettaTipo(o);
+  const sottotitolo = o.stagioni || o.dettaglio || "";
+  const espandibile = ["romanzo","fumetto","manga","audiolibro"].includes(tipo);
+  const meta = [tipoLab, o.rl].concat(o.lg?["Legends"]:[]);
   const mostraImg = COPERTINE_ATTIVE && o.img;
   const src = mostraImg ? `<img data-shot src="immagini/${esc(o.img)}?v=${CACHE_BUST}" alt="" loading="lazy" fetchpriority="low">` : "";
-  return `<li class="item ${lato} ${o.lg?"legends":""}" id="opera-${o.id}">
+  return `<li class="item ${lato} ${o.lg?"legends":""} ${schedeIngrandite.has(o.id)?"mobile-ingrandita":""}" id="opera-${o.id}" data-opera-tipo="${esc(tipo)}">
     <div class="head">
-      <figure class="shot${mostraImg?"":" vuoto"}" data-tipo="${esc(TIPO_LAB[o.t])}">${src}</figure>
+      <figure class="shot${mostraImg?"":" vuoto"}" data-tipo="${esc(tipoLab)}">${src}</figure>
       <span class="txt">
         <span class="yr">${esc(o.yl)}</span>
         <span class="title">${esc(o.ti)}</span>
+        ${sottotitolo?`<span class="stagioni">${esc(sottotitolo)}</span>`:""}
         <span class="meta">${meta.map(m=>`<span>${esc(m)}</span>`).join("")}</span>
       </span>
     </div>
+    ${espandibile?'<span class="mobile-expand" aria-hidden="true"></span>':""}
   </li>`;
+}
+
+/* Su mobile la trasformazione visiva deve ridurre anche lo spazio
+   occupato nella colonna: altrimenti i riquadri sembrano piu' piccoli,
+   ma la pagina resta lunga esattamente come prima. */
+function aggiornaIngombroScheda(scheda){
+  if(!scheda) return;
+  if(!vistaMobile.matches){
+    scheda.style.removeProperty("height");
+    scheda.style.removeProperty("--scala-scheda-mobile");
+    return;
+  }
+  const head = scheda.querySelector(".head");
+  if(!head) return;
+  const scala = scheda.classList.contains("mobile-ingrandita")
+    ? SCALA_SCHEDA_INGRANDITA : SCALA_SCHEDA_CHIUSA;
+  scheda.style.setProperty("--scala-scheda-mobile", scala);
+  scheda.style.height = Math.ceil(head.offsetHeight * scala) + "px";
+}
+
+function aggiornaIngombriSchede(){
+  document.querySelectorAll(SELETTORE_SCHEDE_MOBILI).forEach(aggiornaIngombroScheda);
 }
 
 
@@ -1309,15 +1670,126 @@ function spia(gs){
   const cima = ribbonNav.offsetHeight;
   const barra = document.querySelector(".controls").offsetHeight;
   document.documentElement.style.setProperty("--bar-h", (RIBBON_GAP+cima+barra)+"px");
-  osservatore = new IntersectionObserver(en=>{
-    en.forEach(e=>{
-      if(!e.isIntersecting) return;
-      const g = gs.find(x=>x.id === e.target.id); if(!g) return;
-      ribbon.querySelectorAll(".seg").forEach(s=>
-        s.setAttribute("aria-current", String(s.dataset.go === g.id)));
-    });
-  },{rootMargin:`-${cima+barra+12}px 0px -70% 0px`});
-  gs.forEach(g=>{const el=document.getElementById(g.id); if(el) osservatore.observe(el)});
+  ultimaEpocaAttiva = "";
+  aggiornaProgressoEre();
+}
+
+/* Il punto di lettura e' subito sotto nastro e filtri. La percentuale
+   viene calcolata sull'altezza reale della sezione, quindi si aggiorna
+   correttamente anche dopo una ricerca o il cambio dei filtri. */
+let progressoEreAtteso = false;
+let ultimaEpocaAttiva = "";
+function lineaLetturaTimeline(){
+  return RIBBON_GAP + ribbonNav.offsetHeight
+    + document.querySelector(".controls").offsetHeight + 12;
+}
+function aggiornaProgressoEre(){
+  const sezioni = [...list.querySelectorAll(".group")];
+  const segmenti = [...ribbon.querySelectorAll(".seg")];
+  if(!sezioni.length || !segmenti.length) return;
+
+  const linea = lineaLetturaTimeline();
+  /* Rimane attiva l'ultima sezione il cui inizio e' stato superato.
+     Cosi' gli spazi tra due gruppi non fanno saltare per un fotogramma
+     l'indicatore all'ultima epoca della timeline. */
+  let corrente = 0;
+  for(let i=0;i<sezioni.length;i++){
+    if(sezioni[i].getBoundingClientRect().top <= linea) corrente = i;
+    else break;
+  }
+
+  const rCorrente = sezioni[corrente].getBoundingClientRect();
+  const avanzamento = Math.min(1,Math.max(0,
+    (linea-rCorrente.top) / Math.max(1,rCorrente.height)));
+
+  segmenti.forEach((segmento,i)=>{
+    const p = i < corrente ? 1 : i === corrente ? avanzamento : 0;
+    segmento.style.setProperty("--epoca-progress",p.toFixed(4));
+    segmento.setAttribute("aria-current",String(i === corrente));
+    segmento.classList.toggle("epoca-completa",i < corrente);
+  });
+
+  const segmentoCorrente = segmenti[corrente];
+  if(segmentoCorrente.dataset.go !== ultimaEpocaAttiva){
+    ultimaEpocaAttiva = segmentoCorrente.dataset.go;
+    if(matchMedia("(max-width:760px)").matches){
+      const sinistra = Math.max(0,Math.min(ribbon.scrollWidth-ribbon.clientWidth,
+        segmentoCorrente.offsetLeft-(ribbon.clientWidth-segmentoCorrente.offsetWidth)/2));
+      ribbon.scrollTo({left:sinistra,behavior:
+        matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth"});
+    }
+  }
+}
+function programmaProgressoEre(){
+  if(progressoEreAtteso) return;
+  progressoEreAtteso = true;
+  requestAnimationFrame(()=>{
+    aggiornaProgressoEre();
+    progressoEreAtteso = false;
+  });
+}
+addEventListener("scroll",programmaProgressoEre,{passive:true});
+
+/* Conserva il punto che l'utente sta leggendo quando un filtro accorcia
+   la pagina. Se l'opera di riferimento viene nascosta, usa la stessa
+   percentuale dell'epoca; se sparisce anche l'epoca, sceglie la piu'
+   vicina tra quelle rimaste. */
+function catturaPosizioneTimeline(tipoDaNascondere=""){
+  if(scrollY < 2) return {inCima:true};
+  const linea = lineaLetturaTimeline();
+  const sezioni = [...list.querySelectorAll(".group")];
+  if(!sezioni.length) return null;
+
+  const ancora = [...list.querySelectorAll(".item")]
+    .find(item=>item.dataset.operaTipo !== tipoDaNascondere
+      && item.getBoundingClientRect().bottom > linea);
+  let corrente = 0;
+  for(let i=0;i<sezioni.length;i++){
+    if(sezioni[i].getBoundingClientRect().top <= linea) corrente = i;
+    else break;
+  }
+  const sezione = sezioni[corrente];
+  const r = sezione.getBoundingClientRect();
+  return {
+    ancoraId:ancora?.id || "",
+    ancoraScarto:ancora ? ancora.getBoundingClientRect().top-linea : 0,
+    epocaId:sezione.id,
+    epocaIndice:ERE.findIndex(e=>"epoca-"+e.id === sezione.id),
+    avanzamento:Math.min(1,Math.max(0,(linea-r.top)/Math.max(1,r.height)))
+  };
+}
+
+function ripristinaPosizioneTimeline(posizione){
+  if(!posizione) return;
+  if(posizione.inCima){scrollTo(0,0);return;}
+  const applica = ()=>{
+    aggiornaRibbon();
+    const linea = lineaLetturaTimeline();
+    const ancora = posizione.ancoraId && document.getElementById(posizione.ancoraId);
+    if(ancora){
+      scrollBy(0,ancora.getBoundingClientRect().top-linea-posizione.ancoraScarto);
+    }else{
+      const sezioni = [...list.querySelectorAll(".group")];
+      let sezione = document.getElementById(posizione.epocaId);
+      if(!sezione && sezioni.length){
+        sezione = sezioni.reduce((migliore,candidata)=>{
+          const indice = ERE.findIndex(e=>"epoca-"+e.id === candidata.id);
+          const distanza = Math.abs(indice-posizione.epocaIndice);
+          return !migliore || distanza < migliore.distanza
+            ? {el:candidata,distanza} : migliore;
+        },null)?.el;
+      }
+      if(sezione){
+        const r = sezione.getBoundingClientRect();
+        scrollBy(0,r.top+r.height*posizione.avanzamento-linea);
+      }
+    }
+    aggiornaRibbon();
+    aggiornaProgressoEre();
+    aggiornaBackTop();
+  };
+  applica();
+  requestAnimationFrame(applica);
 }
 
 /* ===================== scroll animato e "protetto" ====================== */
@@ -1360,11 +1832,56 @@ function scrollaProtetto(el){
   })(t0);
 }
 
+/* Il ritorno all'inizio compare solo dopo che la pagina e' stata
+   percorsa abbastanza da renderlo davvero utile. */
+let backTopAtteso = false;
+function aggiornaBackTop(){
+  const soglia = Math.max(520, innerHeight * .75);
+  backTop.classList.toggle("visibile", scrollY > soglia);
+}
+addEventListener("scroll", ()=>{
+  if(backTopAtteso) return;
+  backTopAtteso = true;
+  requestAnimationFrame(()=>{
+    aggiornaBackTop();
+    backTopAtteso = false;
+  });
+},{passive:true});
+aggiornaBackTop();
+
 /* ============================== eventi ================================= */
+backTop.addEventListener("click", ()=>{
+  backTop.blur();
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches) scrollTo(0,0);
+  else scrollaProtetto(document.querySelector(".wrap"));
+});
+
 document.addEventListener("click", ev=>{
   const t = ev.target.closest("[data-go]");
   if(!t) return;
   scrollaProtetto(document.getElementById(t.dataset.go));
+});
+
+filters.addEventListener("click", ev=>{
+  const btn = ev.target.closest("[data-filter]");
+  if(!btn) return;
+  const tipo = btn.dataset.filter;
+  const posizione = catturaPosizioneTimeline(state.tipi.has(tipo) ? tipo : "");
+  if(state.tipi.has(tipo)) state.tipi.delete(tipo);
+  else state.tipi.add(tipo);
+  render();
+  ripristinaPosizioneTimeline(posizione);
+});
+
+document.addEventListener("click", ev=>{
+  if(!vistaMobile.matches) return;
+  const scheda = ev.target.closest(SELETTORE_SCHEDE_MOBILI);
+  if(!scheda) return;
+  const id = scheda.id.replace(/^opera-/, "");
+  const ingrandita = scheda.classList.toggle("mobile-ingrandita");
+  if(ingrandita) schedeIngrandite.add(id);
+  else schedeIngrandite.delete(id);
+  aggiornaIngombroScheda(scheda);
 });
 
 let deb;
@@ -1372,8 +1889,17 @@ document.getElementById("q").addEventListener("input", e=>{
   clearTimeout(deb);
   deb = setTimeout(()=>{state.q = e.target.value; render()},140);
 });
-window.addEventListener("resize", ()=>document.documentElement.style
-  .setProperty("--bar-h", (RIBBON_GAP+ribbonNav.offsetHeight+document.querySelector(".controls").offsetHeight)+"px"));
+let resizeSchedeId = null;
+window.addEventListener("resize", ()=>{
+  cancelAnimationFrame(resizeSchedeId);
+  resizeSchedeId = requestAnimationFrame(()=>{
+    document.documentElement.style.setProperty("--bar-h",
+      (RIBBON_GAP+ribbonNav.offsetHeight+document.querySelector(".controls").offsetHeight)+"px");
+    aggiornaIngombriSchede();
+    ultimaEpocaAttiva = "";
+    programmaProgressoEre();
+  });
+});
 
 /* il nastro delle epoche si abbassa e il simbolo si rimpicciolisce in
    modo continuo, legato allo scroll (variabile --p, da 0 a 1): NON e'
