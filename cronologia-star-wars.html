@@ -778,6 +778,69 @@ body{
 }
 .back-top span::before{top:1px}
 .back-top span::after{top:9px}
+.jump-transition{display:none}
+@media (max-width:700px){
+  /* Nei salti molto lunghi il webview non deve ridisegnare tutta la timeline.
+     Questa velatura riproduce la linea e le schede in rapido movimento: il
+     trasferimento nascosto sembra cosi' la continuazione dello scroll vero. */
+  .jump-transition{
+    --timeline-side-pad:20px;
+    --timeline-x:calc(var(--timeline-side-pad) + 14px);
+    display:block;position:fixed;z-index:90;overflow:hidden;
+    top:calc(var(--bar-h,0px) + 12px);right:0;bottom:0;left:0;
+    opacity:0;visibility:hidden;pointer-events:none;contain:strict;isolation:isolate;
+    background:
+      linear-gradient(90deg,rgba(2,4,9,.99) 0 14%,rgba(5,9,16,.955) 28%,
+        rgba(6,11,19,.95) 74%,rgba(2,4,9,.99) 100%),
+      #020409;
+    transition:opacity .22s ease,visibility 0s linear .22s
+  }
+  .jump-transition::before{
+    content:"";position:absolute;top:-116px;bottom:-116px;
+    left:calc(var(--timeline-x) - 10px);width:20px;opacity:0;
+    background:
+      radial-gradient(circle,rgba(151,184,222,.88) 0 3px,
+        rgba(91,132,181,.4) 4px,transparent 6px) center 18px/20px 116px repeat-y,
+      linear-gradient(to right,transparent 9px,rgba(117,150,188,.42) 9px 11px,
+        transparent 11px) center/20px 100% no-repeat;
+    filter:blur(.35px);transform:translate3d(0,0,0);
+    transition:opacity .11s ease
+  }
+  .jump-transition::after{
+    content:"";position:absolute;top:-116px;
+    right:calc(var(--timeline-side-pad) + 10vw);bottom:-116px;
+    left:calc(var(--timeline-x) + 26px);opacity:0;
+    border-radius:8px;
+    background:repeating-linear-gradient(to bottom,
+      transparent 0 13px,
+      rgba(81,111,146,.05) 14px 23px,
+      rgba(107,137,171,.12) 24px 74px,
+      rgba(147,177,211,.22) 75px 76px,
+      rgba(24,39,58,.08) 77px 84px,
+      transparent 85px 116px);
+    filter:blur(2.2px);transform:translate3d(0,0,0);
+    transition:opacity .11s ease
+  }
+  .jump-transition.is-visible{
+    opacity:1;visibility:visible;pointer-events:auto;
+    transition:opacity .22s ease,visibility 0s
+  }
+  .jump-transition.is-visible::before{
+    opacity:.72;animation:timelineRush .24s linear infinite
+  }
+  .jump-transition.is-visible::after{
+    opacity:.9;animation:timelineRush .24s linear infinite
+  }
+  .jump-transition.is-visible.verso-alto::before,
+  .jump-transition.is-visible.verso-alto::after{animation-direction:reverse}
+  .jump-transition.is-exiting{
+    opacity:0;pointer-events:none;
+    transition:opacity .18s cubic-bezier(.22,.72,.24,1),visibility 0s linear .18s
+  }
+  @keyframes timelineRush{
+    to{transform:translate3d(0,-116px,0)}
+  }
+}
 #list{min-height:calc(100vh - var(--bar-h))}
 .empty{padding:64px 0;color:var(--ink-dim);max-width:44ch}
 .empty b{font-family:var(--display);font-size:21px;font-weight:600;color:var(--ink);
@@ -1159,6 +1222,7 @@ body{
 }
 @media (max-width:560px){
   .wrap{padding:0 15px 90px}
+  .jump-transition{--timeline-side-pad:15px}
   .controls{margin:22px -15px 0;padding:12px 15px}
   .masthead{padding:38px 0 20px}
   .head{gap:12px;padding:12px}
@@ -1239,6 +1303,7 @@ body{
 <button class="back-top" id="backTop" type="button" aria-label="Torna all'inizio">
   <span aria-hidden="true"></span>
 </button>
+<div class="jump-transition" id="jumpTransition" aria-hidden="true"></div>
 
 <script>
 /* Le immagini sono elementi visivi del sito, non oggetti trascinabili. */
@@ -2407,6 +2472,7 @@ const mobileFiltersToggle = document.getElementById("mobileFiltersToggle");
 const mobileSearchClose = document.getElementById("mobileSearchClose");
 const mobileFiltersClose = document.getElementById("mobileFiltersClose");
 const backTop = document.getElementById("backTop");
+const jumpTransition = document.getElementById("jumpTransition");
 let sezioniTimeline = [], segmentiRibbon = [];
 let metricheSezioni = [], metricheTimelineAttese = false;
 let osservatoreDimensioni = null;
@@ -2780,19 +2846,57 @@ function ripristinaPosizioneTimeline(posizione){
    scroll nativo (che l'utente puo' interrompere in qualunque momento
    girando la rotellina o toccando lo schermo), qui blocchiamo rotellina
    e trascinamento touch finche' l'animazione non e' arrivata a destinazione */
-let scrollAnimId = null, scrollBlocco = null;
+let scrollAnimId = null, scrollBlocco = null, scrollSaltoTimer = null;
 function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+function easeOutQuad(t){ return 1-(1-t)*(1-t); }
+function aggiornaDopoScrollProtetto(){
+  ultimaEpocaAttiva = "";
+  aggiornaRibbon(true);
+  aggiornaProgressoEre();
+  aggiornaBackTop();
+  aggiornaParallasse();
+}
+function terminaScrollProtetto(){
+  scrollAnimId = null;
+  if(scrollSaltoTimer){
+    clearTimeout(scrollSaltoTimer);
+    scrollSaltoTimer = null;
+  }
+  jumpTransition.classList.remove("is-visible","is-exiting","verso-alto");
+  if(scrollBlocco) scrollBlocco();
+  aggiornaDopoScrollProtetto();
+}
+function animaTrattoScroll(startY,targetY,durata,
+  alTermine=terminaScrollProtetto,easing=easeInOutCubic){
+  const distanza = targetY-startY;
+  const t0 = performance.now();
+  function passo(now){
+    const p = Math.min(1,(now-t0)/durata);
+    scrollTo(0,Math.round(startY+distanza*easing(p)));
+    if(p < 1) scrollAnimId = requestAnimationFrame(passo);
+    else alTermine();
+  }
+  scrollAnimId = requestAnimationFrame(passo);
+}
+function annullaScrollProtetto(){
+  if(scrollAnimId && scrollAnimId !== -1) cancelAnimationFrame(scrollAnimId);
+  scrollAnimId = null;
+  if(scrollSaltoTimer){
+    clearTimeout(scrollSaltoTimer);
+    scrollSaltoTimer = null;
+  }
+  jumpTransition.classList.remove("is-visible","is-exiting","verso-alto");
+  if(scrollBlocco) scrollBlocco();
+}
 function scrollaProtetto(el){
   if(!el) return;
-  if(scrollAnimId) cancelAnimationFrame(scrollAnimId);
-  if(scrollBlocco) scrollBlocco();
+  annullaScrollProtetto();
 
   const startY = scrollY;
-  const targetY = Math.max(0, el.getBoundingClientRect().top + scrollY);
+  const maxY = Math.max(0,document.documentElement.scrollHeight-innerHeight);
+  const targetY = Math.max(0,Math.min(maxY,el.getBoundingClientRect().top + scrollY));
   const distanza = targetY - startY;
   if(Math.abs(distanza) < 2) return;
-  const durata = Math.min(620, Math.max(360, Math.abs(distanza)*0.4));
-  const t0 = performance.now();
 
   const impedisci = e => e.preventDefault();
   addEventListener("wheel", impedisci, {passive:false});
@@ -2803,21 +2907,60 @@ function scrollaProtetto(el){
     scrollBlocco = null;
   };
 
-  (function passo(now){
-    const p = Math.min(1, (now-t0)/durata);
-    scrollTo(0, Math.round(startY + distanza*easeInOutCubic(p)));
-    if(p < 1){
-      scrollAnimId = requestAnimationFrame(passo);
-    } else {
-      scrollAnimId = null;
-      scrollBlocco();
-      ultimaEpocaAttiva = "";
-      aggiornaRibbon(true);
-      aggiornaProgressoEre();
-      aggiornaBackTop();
-      aggiornaParallasse();
-    }
-  })(t0);
+  const movimentoRidotto = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const saltoMobileLungo = vistaMobile.matches && !movimentoRidotto
+    && Math.abs(distanza) > Math.max(2200,innerHeight*3);
+
+  if(!saltoMobileLungo){
+    const durata = movimentoRidotto ? 1
+      : Math.min(620,Math.max(360,Math.abs(distanza)*.4));
+    animaTrattoScroll(startY,targetY,durata);
+    return;
+  }
+
+  /* Il movimento comincia con un tratto vero e completamente visibile.
+     Soltanto dopo entra la versione alleggerita della timeline; concluso
+     il trasferimento, un secondo tratto vero rimane visibile fino alla meta. */
+  const verso = Math.sign(distanza);
+  const trattoVisibileInizio = Math.min(760,Math.max(520,innerHeight*.78));
+  const trattoCopertura = Math.min(320,Math.max(200,innerHeight*.3));
+  const ingressoY = Math.max(0,Math.min(maxY,
+    startY+verso*(trattoVisibileInizio+trattoCopertura)));
+  const trattoFinale = Math.min(840,Math.max(560,innerHeight*.94));
+  const preTargetY = Math.max(0,Math.min(maxY,targetY-verso*trattoFinale));
+  jumpTransition.classList.toggle("verso-alto",verso < 0);
+  /* La velatura comincia mentre questo stesso scroll e' ancora in corsa:
+     il rallentamento finale resta nascosto e non sembra una fermata. */
+  const durataIngresso = 600;
+  scrollSaltoTimer = setTimeout(()=>{
+    scrollSaltoTimer = null;
+    jumpTransition.classList.add("is-visible");
+  },Math.round(durataIngresso*.57));
+  animaTrattoScroll(startY,ingressoY,durataIngresso,()=>{
+    jumpTransition.classList.add("is-visible");
+    scrollAnimId = -1;
+    scrollSaltoTimer = setTimeout(()=>{
+      scrollSaltoTimer = null;
+      scrollTo(0,preTargetY);
+      aggiornaDopoScrollProtetto();
+      scrollAnimId = requestAnimationFrame(()=>{
+        scrollAnimId = requestAnimationFrame(()=>{
+          /* Il nastro compatto cambia leggermente l'altezza iniziale della
+             pagina: ricalcolare qui la meta evita anche pochi pixel di
+             sovraelongazione quando il salto parte proprio dall'inizio. */
+          const maxAggiornato = Math.max(0,document.documentElement.scrollHeight-innerHeight);
+          const metaAggiornata = Math.max(0,Math.min(maxAggiornato,
+            el.getBoundingClientRect().top+scrollY));
+          const partenzaFinale = scrollY;
+          /* All'uscita parte veloce e rallenta soltanto vicino alla meta:
+             quando la velatura sparisce lo scroll e' quindi gia' evidente. */
+          jumpTransition.classList.add("is-exiting");
+          animaTrattoScroll(partenzaFinale,metaAggiornata,650,
+            terminaScrollProtetto,easeOutQuad);
+        });
+      });
+    },45);
+  });
 }
 
 /* Il ritorno all'inizio compare solo dopo che la pagina e' stata
