@@ -635,13 +635,13 @@ body{
   font-family:var(--body);font-weight:500;font-style:italic;letter-spacing:.055em
 }
 
-/* Guida cronologica di The Clone Wars: la scheda del film apre un pannello
-   dedicato senza cambiare la gerarchia o il comportamento delle altre opere. */
-.item.has-episode-guide .head{position:relative;cursor:pointer;font:inherit;
+/* Le schede con approfondimenti aprono un pannello dedicato senza cambiare
+   la gerarchia o il comportamento delle altre opere. */
+.item:is(.has-episode-guide,.has-comic-guide) .head{position:relative;cursor:pointer;font:inherit;
   appearance:none;-webkit-appearance:none;
   transition:border-color .22s ease,box-shadow .22s ease,transform .18s ease}
-.item.has-episode-guide .head:active{transform:scale(.996)}
-.item.has-episode-guide .head:focus-visible{outline:2px solid var(--c);outline-offset:4px}
+.item:is(.has-episode-guide,.has-comic-guide) .head:active{transform:scale(.996)}
+.item:is(.has-episode-guide,.has-comic-guide) .head:focus-visible{outline:2px solid var(--c);outline-offset:4px}
 .episode-expand{position:absolute;right:14px;bottom:14px;z-index:3;
   width:30px;height:30px;border:1px solid color-mix(in srgb,var(--c) 72%,transparent);
   border-radius:8px;background:rgba(3,5,11,.9);color:var(--c);
@@ -651,9 +651,14 @@ body{
   left:50%;top:50%;width:11px;height:2px;border-radius:2px;background:currentColor;
   transform:translate(-50%,-50%);transition:transform .28s ease,opacity .2s ease}
 .episode-expand::after{transform:translate(-50%,-50%) rotate(90deg)}
-.item.episode-guide-open .episode-expand{border-color:var(--c);
+.item.has-comic-guide .episode-expand{
+  right:10px;bottom:10px;width:22px;height:22px;border-radius:6px
+}
+.item.has-comic-guide .episode-expand::before,
+.item.has-comic-guide .episode-expand::after{width:8px;height:1.5px}
+.item:is(.episode-guide-open,.comic-guide-open) .episode-expand{border-color:var(--c);
   box-shadow:0 0 18px color-mix(in srgb,var(--c) 34%,transparent);transform:rotate(180deg)}
-.item.episode-guide-open .episode-expand::after{opacity:0;
+.item:is(.episode-guide-open,.comic-guide-open) .episode-expand::after{opacity:0;
   transform:translate(-50%,-50%) rotate(90deg) scaleY(0)}
 .episode-guide{display:grid;grid-template-rows:0fr;opacity:0;
   transform:translateY(-9px);pointer-events:none;
@@ -685,6 +690,36 @@ body{
   border-radius:7px;background:color-mix(in srgb,var(--c) 10%,transparent)}
 .episode-row.is-film .episode-order,.episode-row.is-film .episode-name{color:var(--ink);font-weight:700}
 .episode-row.is-film .episode-code{background:var(--c);border-color:var(--c);color:#06101E}
+
+/* Elenco dei numeri originali inclusi in ciascuna raccolta a fumetti. */
+.comic-guide{display:grid;grid-template-rows:0fr;opacity:0;
+  transform:translateY(-8px);pointer-events:none;
+  transition:grid-template-rows .38s cubic-bezier(.22,.8,.25,1),
+    opacity .22s ease,transform .34s cubic-bezier(.22,.8,.25,1)}
+.item.comic-guide-open .comic-guide{grid-template-rows:1fr;opacity:1;
+  transform:translateY(0);pointer-events:auto}
+.comic-guide-clip{min-height:0;overflow:hidden}
+.comic-guide-card{margin-top:8px;padding:12px 14px 13px;
+  border:1px solid color-mix(in srgb,var(--c) 34%,transparent);
+  border-radius:var(--r);background:rgba(7,12,21,.96);
+  box-shadow:0 12px 28px rgba(0,0,0,.26),0 0 22px color-mix(in srgb,var(--c) 7%,transparent)}
+.comic-guide-title{display:block;margin:0 0 8px;font-family:var(--display);
+  font-size:14px;font-weight:750;line-height:1.15;color:var(--c);letter-spacing:.02em}
+.comic-contents-list{list-style:none;margin:0;padding:0}
+.comic-contents-list li{position:relative;padding:6px 6px 6px 17px;
+  border-top:1px solid rgba(148,178,206,.09);color:#CED9E6;
+  font-size:12.5px;font-weight:500;line-height:1.3}
+.comic-contents-list li::before{content:"";position:absolute;left:3px;top:12px;
+  width:5px;height:5px;border-radius:50%;background:var(--c);
+  box-shadow:0 0 8px color-mix(in srgb,var(--c) 38%,transparent)}
+.comic-collection-note{margin:10px 0 0;padding:9px 10px 8px;
+  border-top:1px solid color-mix(in srgb,var(--c) 28%,transparent);
+  background:color-mix(in srgb,var(--c) 6%,transparent);color:var(--ink-dim)}
+.comic-collection-note span{display:block;margin-bottom:3px;font-family:var(--display);
+  font-size:9.5px;font-weight:650;letter-spacing:.075em;text-transform:uppercase;
+  color:color-mix(in srgb,var(--c) 72%,var(--ink-dim))}
+.comic-collection-note strong{display:block;font-size:12px;font-weight:650;
+  line-height:1.3;color:#D3DEEA}
 .mobile-expand{display:none}
 .back-top{
   position:fixed;z-index:45;right:24px;bottom:24px;width:48px;height:48px;
@@ -762,6 +797,10 @@ body{
     [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .head{margin-left:auto}
   .item.dx:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
     [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .head{margin-right:auto}
+  .item.has-comic-guide .comic-guide{width:81%}
+  .item.sx.has-comic-guide .comic-guide{margin-left:auto}
+  .item.dx.has-comic-guide .comic-guide{margin-right:auto}
+  .item.sx.has-comic-guide .episode-expand{left:10px;right:auto}
   .item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
     [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .title{font-size:17.42px}
   .item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
@@ -788,6 +827,10 @@ body{
   .item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],[data-opera-tipo="manga"])
   +.item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],[data-opera-tipo="manga"]){
     margin-top:-64.8px
+  }
+  .item.comic-guide-open
+  +.item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],[data-opera-tipo="manga"]){
+    margin-top:0
   }
 }
 
@@ -1011,9 +1054,38 @@ body{
     box-shadow:0 0 10px color-mix(in srgb,var(--c) 26%,transparent)
   }
   .item.mobile-ingrandita .mobile-expand::before{content:"−"}
-  .item.has-episode-guide .head{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .item.has-comic-guide > .mobile-expand{
+    top:calc(var(--altezza-testa-mobile,80px) - 23px);bottom:auto;
+    transition:top .22s ease,right .22s ease,border-color .22s ease,
+      box-shadow .22s ease,transform .28s ease
+  }
+  .item.has-comic-guide > .mobile-expand::before,
+  .item.has-comic-guide > .mobile-expand::after{
+    content:"";position:absolute;left:50%;top:50%;width:7px;height:1.25px;
+    border-radius:2px;background:currentColor;transform:translate(-50%,-50%);
+    transition:transform .28s ease,opacity .2s ease
+  }
+  .item.has-comic-guide > .mobile-expand::after{
+    transform:translate(-50%,-50%) rotate(90deg)
+  }
+  .item.comic-guide-open > .mobile-expand{transform:rotate(180deg)}
+  .item.comic-guide-open > .mobile-expand::after{
+    opacity:0;transform:translate(-50%,-50%) rotate(90deg) scaleY(0)
+  }
+  .item:is(.has-episode-guide,.has-comic-guide) .head{
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent
+  }
+  /* Il feedback :active desktop porterebbe per un istante la scheda
+     compressa quasi a grandezza piena, prima dell'aggiornamento del suo
+     ingombro. Su mobile conserva invece la scala corrente. */
+  .item.has-comic-guide .head:active{
+    transform:scale(var(--scala-scheda-mobile,.6))
+  }
   .episode-expand{right:10px;bottom:10px;width:25px;height:25px;border-radius:6px}
   .episode-expand::before,.episode-expand::after{width:9px;height:1.5px}
+  /* Nei fumetti il controllo mobile esterno è lo stesso usato da romanzi,
+     manga e audiolibri; quello interno resta riservato al desktop. */
+  .item.has-comic-guide .episode-expand{display:none}
   .episode-guide-card{margin-top:8px}
   .episode-guide-head{padding:13px 14px 11px}
   .episode-guide-head strong{font-size:18px}
@@ -1023,6 +1095,29 @@ body{
     min-height:37px;padding:7px 5px}
   .episode-order,.episode-code{font-size:10px}
   .episode-name{font-size:13px}
+  .item.has-comic-guide .comic-guide{
+    width:calc(100% * var(--scala-scheda-mobile,.6));
+    opacity:1;transform:none;
+    transition:grid-template-rows .44s cubic-bezier(.22,.8,.25,1),width .22s ease
+  }
+  .item.has-comic-guide .comic-guide-card{
+    opacity:.35;transform:translateY(-18px);
+    transition:transform .44s cubic-bezier(.22,.8,.25,1),opacity .2s ease
+  }
+  .item.has-comic-guide.comic-guide-open .comic-guide-card{
+    opacity:1;transform:translateY(0)
+  }
+  /* L'ingombro del riquadro principale segue la sua stessa animazione. */
+  .item.has-comic-guide{
+    transition:height .22s ease,margin-bottom .22s ease
+  }
+  .comic-guide-card{margin-top:7px;padding:10px 11px 11px}
+  .comic-guide-title{margin-bottom:6px;font-size:13px}
+  .comic-contents-list li{padding:5px 4px 5px 15px;font-size:11.5px}
+  .comic-contents-list li::before{left:2px;top:10px;width:4px;height:4px}
+  .comic-collection-note{margin-top:8px;padding:7px 8px}
+  .comic-collection-note span{font-size:8.5px}
+  .comic-collection-note strong{font-size:10.5px}
 }
 @media (max-width:560px){
   .wrap{padding:0 15px 90px}
@@ -1348,8 +1443,8 @@ const OPERE = [
    n:"Obi-Wan Kenobi appena nominato padawan di Qui-Gon Jinn, alle prese con la prima vera crisi del loro rapporto di maestro e allievo."},
   {ti:"Tales of the Underworld - Un Grosso Favore", y:-41, yl:"41 BBY", r:2025, rl:"2025", t:"animazione", e:"caduta", img:"tales-of-the-underworld.jpg",
    n:"Antologia di corti animati su alcuni dei personaggi più loschi della galassia."},
-  {ti:"Cavalieri Jedi Vol. 1 – Guardiani della Repubblica", y:-40, yl:"c. 40 – 34 BBY", r:2025, rl:"2025", t:"fumetto", e:"caduta", img:"cavalieri-jedi-guardiani-repubblica.jpg",
-   n:"Prima miniserie della testata Cavalieri Jedi, ambientata negli anni prima della Minaccia Fantasma."},
+  {ti:"Cavalieri Jedi (2025) Vol. 1 – Guardiani della Repubblica", y:-40, yl:"c. 40 – 34 BBY", r:2025, rl:"2025", t:"fumetto", e:"caduta", img:"cavalieri-jedi-guardiani-repubblica.jpg",
+   n:"Primo volume della serie regolare Cavalieri Jedi, ambientata negli anni prima della Minaccia Fantasma."},
   {ti:"L'Età della Repubblica – Eroi: Qui-Gon Jinn", y:-37, yl:"37 BBY", r:2019, rl:"2019", t:"fumetto", e:"caduta", img:"eta-repubblica-eroi.jpg",
    n:"Antologia di quattro one-shot su Qui-Gon Jinn, Obi-Wan Kenobi, Anakin Skywalker e Padmé Amidala nell'epoca della Repubblica."},
   {ti:"Darth Maul", y:-33, yl:"33 BBY", r:2017, rl:"2017", t:"fumetto", e:"caduta", img:"darth-maul-fumetto.jpg",
@@ -1561,7 +1656,7 @@ const OPERE = [
    n:"Primo arco della serie regolare Star Wars (2020), che rilancia la testata principale Marvel dopo la serie di Jason Aaron: Luke, Leia e Han fanno i conti con le conseguenze della disfatta di Hoth."},
   {ti:"Darth Vader (2020) Vol. 1 – Il Cuore Nero dei Sith", y:3, yl:"3 ABY", r:2021, rl:"2021", t:"fumetto", e:"ribellione", img:"darth-vader-2020-vol1-cuore-nero-dei-sith.jpg",
    n:"Primo arco della serie regolare Darth Vader (2020), che rilancia la testata dedicata a Vader in parallelo al rilancio 2020 di Star Wars."},
-  {ti:"Cacciatori di Taglie Vol. 1 – I Più Letali della Galassia", y:3, yl:"3 ABY", r:2020, rl:"2020", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-1.jpg",
+  {ti:"Cacciatori di Taglie (2020) Vol. 1 – I Più Letali della Galassia", y:3, yl:"3 ABY", r:2020, rl:"2020", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-1.jpg",
    n:"Primo arco della serie regolare Cacciatori di Taglie."},
   {ti:"Dottoressa Aphra (2020) Vol. 1 – Fortuna e Fato", y:3, yl:"3 ABY", r:2021, rl:"2021", t:"fumetto", e:"ribellione", img:"dottoressa-aphra-2020-vol1-fortuna-e-fato.jpg",
    n:"Primo arco della serie regolare Dottoressa Aphra (2020), che rilancia la testata dell'archeologa fuorilegge dopo la fine della serie 2016."},
@@ -1569,7 +1664,7 @@ const OPERE = [
    n:"Secondo arco della serie regolare Star Wars (2020)."},
   {ti:"Darth Vader (2020) Vol. 2 – Tra le Fiamme", y:3, yl:"3 ABY", r:2021, rl:"2021", t:"fumetto", e:"ribellione", img:"darth-vader-2020-vol2-tra-le-fiamme.jpg",
    n:"Secondo arco della serie regolare Darth Vader (2020)."},
-  {ti:"Cacciatori di Taglie Vol. 2 – Obiettivo Valance", y:3, yl:"3 ABY", r:2021, rl:"2021", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-2.jpg",
+  {ti:"Cacciatori di Taglie (2020) Vol. 2 – Obiettivo Valance", y:3, yl:"3 ABY", r:2021, rl:"2021", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-2.jpg",
    n:"Secondo arco della serie regolare Cacciatori di Taglie."},
   {ti:"Dottoressa Aphra (2020) Vol. 2 – Il Motore Perduto", y:3, yl:"3 ABY", r:2021, rl:"2021", t:"fumetto", e:"ribellione", img:"dottoressa-aphra-2020-vol2-motore-perduto.jpg",
    n:"Secondo arco della serie regolare Dottoressa Aphra (2020)."},
@@ -1579,7 +1674,7 @@ const OPERE = [
    n:"Terzo arco della serie regolare Star Wars (2020). Crossover con La Guerra dei Cacciatori di Taglie, Darth Vader (2020), Dottoressa Aphra (2020) e Cacciatori di Taglie."},
   {ti:"Darth Vader (2020) Vol. 3 – La Guerra dei Cacciatori di Taglie", y:3, yl:"3 ABY", r:2022, rl:"2022", t:"fumetto", e:"ribellione", img:"darth-vader-2020-vol3-guerra-cacciatori-di-taglie.jpg",
    n:"Terzo arco della serie regolare Darth Vader (2020). Crossover con La Guerra dei Cacciatori di Taglie, Star Wars (2020), Dottoressa Aphra (2020) e Cacciatori di Taglie."},
-  {ti:"Cacciatori di Taglie Vol. 3 – La Guerra dei Cacciatori di Taglie", y:3, yl:"3 ABY", r:2022, rl:"2022", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-3.jpg",
+  {ti:"Cacciatori di Taglie (2020) Vol. 3 – La Guerra dei Cacciatori di Taglie", y:3, yl:"3 ABY", r:2022, rl:"2022", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-3.jpg",
    n:"Terzo arco della serie regolare Cacciatori di Taglie. Crossover con La Guerra dei Cacciatori di Taglie, Star Wars (2020), Darth Vader (2020) e Dottoressa Aphra (2020)."},
   {ti:"Dottoressa Aphra (2020) Vol. 3 – La Guerra dei Cacciatori di Taglie", y:3, yl:"3 ABY", r:2022, rl:"2022", t:"fumetto", e:"ribellione", img:"dottoressa-aphra-2020-vol3-guerra-cacciatori-di-taglie.jpg",
    n:"Terzo arco della serie regolare Dottoressa Aphra (2020). Crossover con La Guerra dei Cacciatori di Taglie, Star Wars (2020), Darth Vader (2020) e Cacciatori di Taglie."},
@@ -1589,7 +1684,7 @@ const OPERE = [
    n:"Quarto arco della serie regolare Star Wars (2020). Crossover con la miniserie Regno Cremisi."},
   {ti:"Darth Vader (2020) Vol. 4 – Regno Cremisi", y:3, yl:"3 – 4 ABY", r:2022, rl:"2022", t:"fumetto", e:"ribellione", img:"darth-vader-2020-vol4-regno-cremisi.jpg",
    n:"Quarto arco della serie regolare Darth Vader (2020). Crossover con la miniserie Regno Cremisi."},
-  {ti:"Cacciatori di Taglie Vol. 4 – Regno Cremisi", y:3, yl:"3 – 4 ABY", r:2022, rl:"2022", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-4.jpg",
+  {ti:"Cacciatori di Taglie (2020) Vol. 4 – Regno Cremisi", y:3, yl:"3 – 4 ABY", r:2022, rl:"2022", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-4.jpg",
    n:"Quarto arco della serie regolare Cacciatori di Taglie. Crossover con la miniserie Regno Cremisi."},
   {ti:"Dottoressa Aphra (2020) Vol. 4 – Regno Cremisi", y:3, yl:"3 – 4 ABY", r:2022, rl:"2022", t:"fumetto", e:"ribellione", img:"dottoressa-aphra-2020-vol4-regno-cremisi.jpg",
    n:"Quarto arco della serie regolare Dottoressa Aphra (2020). Crossover con la miniserie Regno Cremisi."},
@@ -1605,7 +1700,7 @@ const OPERE = [
    n:"Quinto arco della serie regolare Darth Vader (2020)."},
   {ti:"Dottoressa Aphra (2020) Vol. 5 – La Scintilla Eterna", y:3, yl:"3 – 4 ABY", r:2023, rl:"2023", t:"fumetto", e:"ribellione", img:"dottoressa-aphra-2020-vol5-scintilla-eterna.jpg",
    n:"Quinto arco della serie regolare Dottoressa Aphra (2020)."},
-  {ti:"Cacciatori di Taglie Vol. 5 – Assalto al Vermillion", y:3, yl:"3 – 4 ABY", r:2023, rl:"2023", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-5.jpg",
+  {ti:"Cacciatori di Taglie (2020) Vol. 5 – Assalto al Vermillion", y:3, yl:"3 – 4 ABY", r:2023, rl:"2023", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-5.jpg",
    n:"Quinto arco della serie regolare Cacciatori di Taglie."},
   {ti:"Star Wars (2020) Vol. 6 – Le Prove della Forza", y:3, yl:"3 – 4 ABY", r:2023, rl:"2023", t:"fumetto", e:"ribellione", img:"star-wars-2020-vol6-prove-della-forza.jpg",
    n:"Sesto arco della serie regolare Star Wars (2020)."},
@@ -1613,7 +1708,7 @@ const OPERE = [
    n:"Sesto arco della serie regolare Darth Vader (2020), con il ritorno delle Ancelle al servizio di Vader."},
   {ti:"Dottoressa Aphra (2020) Vol. 6 – Ascendente", y:3, yl:"3 – 4 ABY", r:2023, rl:"2023", t:"fumetto", e:"ribellione", img:"dottoressa-aphra-2020-vol6-ascendente.jpg",
    n:"Sesto arco della serie regolare Dottoressa Aphra (2020)."},
-  {ti:"Cacciatori di Taglie Vol. 6 – Bolgia su Bestine", y:3, yl:"3 – 4 ABY", r:2023, rl:"2023", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-6.jpg",
+  {ti:"Cacciatori di Taglie (2020) Vol. 6 – Bolgia su Bestine", y:3, yl:"3 – 4 ABY", r:2023, rl:"2023", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-6.jpg",
    n:"Sesto arco della serie regolare Cacciatori di Taglie."},
   {ti:"Sana Starros – Affari di Famiglia", y:3, yl:"3 – 4 ABY", r:2023, rl:"2023", t:"fumetto", e:"ribellione", img:"sana-starros-affari-famiglia.jpg",
    n:"One-shot cartonato dedicato a Sana Starros, la finta moglie di Han Solo, alle prese con la propria famiglia criminale."},
@@ -1627,7 +1722,7 @@ const OPERE = [
    n:"Settimo arco della serie regolare Star Wars (2020). Crossover con la miniserie Droidi Oscuri."},
   {ti:"Darth Vader (2020) Vol. 8 – Droidi Oscuri", y:3, yl:"3 – 4 ABY", r:2024, rl:"2024", t:"fumetto", e:"ribellione", img:"darth-vader-2020-vol8-droidi-oscuri.jpg",
    n:"Ottavo arco della serie regolare Darth Vader (2020). Crossover con la miniserie Droidi Oscuri."},
-  {ti:"Cacciatori di Taglie Vol. 7 – Droidi Oscuri", y:3, yl:"3 – 4 ABY", r:2024, rl:"2024", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-7.jpg",
+  {ti:"Cacciatori di Taglie (2020) Vol. 7 – Droidi Oscuri", y:3, yl:"3 – 4 ABY", r:2024, rl:"2024", t:"fumetto", e:"ribellione", img:"cacciatori-di-taglie-7.jpg",
    n:"Settimo e ultimo arco della serie regolare Cacciatori di Taglie. Crossover con la miniserie Droidi Oscuri."},
   {ti:"Dottoressa Aphra (2020) Vol. 7 – Droidi Oscuri", y:3, yl:"3 – 4 ABY", r:2024, rl:"2024", t:"fumetto", e:"ribellione", img:"dottoressa-aphra-2020-vol7-droidi-oscuri.jpg",
    n:"Settimo e ultimo arco della serie regolare Dottoressa Aphra (2020). Crossover con la miniserie Droidi Oscuri."},
@@ -1728,7 +1823,7 @@ const OPERE = [
    n:"Leia senatrice, sei anni prima dell'Episodio VII: come nasce la Resistenza e come si spacca il Senato."},
   {ti:"Star Wars (2025) – Nuova Repubblica", y:6, yl:"c. 6 ABY", r:2025, rl:"2025 – in corso", t:"fumetto", e:"nuova", img:"star-wars-2025-nuova-repubblica.jpg",
    n:"Nuova maxi-serie ambientata due anni dopo Il Ritorno dello Jedi, nei primi anni della Nuova Repubblica."},
-  {ti:"Dottoressa Aphra – Agente del Caos", y:6, yl:"c. 6 ABY", r:2025, rl:"2025", t:"fumetto", e:"nuova", img:"dottoressa-aphra-agente-del-caos.jpg",
+  {ti:"Dottoressa Aphra (2025) – Agente del Caos", y:6, yl:"c. 6 ABY", r:2025, rl:"2025", t:"fumetto", e:"nuova", img:"dottoressa-aphra-agente-del-caos.jpg",
    n:"Nuovo capitolo delle avventure di Doctor Aphra nei primi anni della Nuova Repubblica."},
   {ti:"Last Shot", y:7, yl:"7 ABY", r:2019, rl:"2019", t:"romanzo", e:"nuova", img:"last-shot.jpg",
    n:"Romanzo su Han, Lando e Chewbacca che alterna flashback prima di Solo: A Star Wars Story a un colpo nell'era della Nuova Repubblica."},
@@ -1792,7 +1887,7 @@ const OPERE = [
    n:"Adattamento letterario ampliato del film Gli Ultimi Jedi."},
   {ti:"Gli Ultimi Jedi (Fumetto)", y:34, yl:"34 ABY", r:2019, rl:"2019", t:"fumetto", e:"ordine", img:"ultimi-jedi-fumetto.jpg",
    n:"Adattamento a fumetti del film Gli Ultimi Jedi."},
-  {ti:"L'Eredità di Vader – Il Regno di Kylo Ren", y:34, yl:"34 ABY", r:2025, rl:"2025 – in corso", t:"fumetto", e:"ordine", img:"eredita-vader-regno-kylo-ren.jpg",
+  {ti:"L'Eredità di Vader (2025) – Il Regno di Kylo Ren", y:34, yl:"34 ABY", r:2025, rl:"2025 – in corso", t:"fumetto", e:"ordine", img:"eredita-vader-regno-kylo-ren.jpg",
    n:"Nuova serie sul regno di Kylo Ren e del Primo Ordine dopo gli eventi de Gli Ultimi Jedi."},
   {ti:"Poe Dameron Vol. 5 - La Scintilla e la Fiamma", y:34, yl:"34 ABY", r:2019, rl:"2019", t:"fumetto", e:"ordine", img:"poe-dameron-5-scintilla-e-fiamma.jpg",
    n:"Quinto e ultimo arco narrativo della serie regolare Poe Dameron."},
@@ -1829,11 +1924,11 @@ const OPERE = [
    n:"Omnibus che raccoglie le quattro miniserie horror per famiglie ambientate nel castello di Vader su Mustafar."},
   {ti:"Racconti Galattici del Terrore", y:null, yl:"—", r:2026, rl:"2026", t:"fumetto", e:"fuori", img:"racconti-galattici-del-terrore.jpg",
    n:"Raccolta di tre volumi con storie dell'orrore ambientate in varie epoche della cronologia."},
-  {ti:"Storie dall'Iperspazio Vol. 1 – Ribelli e Resistenza", y:null, yl:"—", r:2023, rl:"2023", t:"fumetto", e:"fuori", img:"storie-iperspazio-1.jpg",
+  {ti:"Storie dall'Iperspazio (2022) Vol. 1 – Ribelli e Resistenza", y:null, yl:"—", r:2023, rl:"2023", t:"fumetto", e:"fuori", img:"storie-iperspazio-1.jpg",
    n:"Raccolta di storie brevi ambientate in varie epoche della cronologia, dalle Guerre dei Cloni alla trilogia sequel."},
-  {ti:"Storie dall'Iperspazio Vol. 2 – Feccia e Malvagità", y:null, yl:"—", r:2024, rl:"2024", t:"fumetto", e:"fuori", img:"storie-iperspazio-vol2-feccia-malvagita.jpg",
+  {ti:"Storie dall'Iperspazio (2022) Vol. 2 – Feccia e Malvagità", y:null, yl:"—", r:2024, rl:"2024", t:"fumetto", e:"fuori", img:"storie-iperspazio-vol2-feccia-malvagita.jpg",
    n:"Raccolta cartonata di storie brevi ambientate in varie epoche della cronologia, incentrate su criminali e personaggi ambigui."},
-  {ti:"Storie dall'Iperspazio Vol. 3 – Luci e Ombre", y:null, yl:"—", r:2024, rl:"2024", t:"fumetto", e:"fuori", img:"storie-iperspazio-vol3-luci-ombre.jpg",
+  {ti:"Storie dall'Iperspazio (2022) Vol. 3 – Luci e Ombre", y:null, yl:"—", r:2024, rl:"2024", t:"fumetto", e:"fuori", img:"storie-iperspazio-vol3-luci-ombre.jpg",
    n:"Raccolta cartonata di storie brevi ambientate in varie epoche della cronologia, incentrate sul confronto tra luce e lato oscuro."},
   {ti:"Miti e Favole", y:null, yl:"—", r:2022, rl:"2022", t:"romanzo", e:"fuori", img:"miti-e-favole.jpg",
    n:"Raccolta illustrata di racconti popolari della galassia, ambientati nell'epoca della trilogia sequel."},
@@ -2001,6 +2096,222 @@ const CLONE_WARS_EPISODI = [
   ["712","Vittoria e morte"]
 ];
 
+/* Contenuti delle raccolte italiane ricavati dal PDF fornito. */
+const CONTENUTI_FUMETTI = new Map([
+  ["L'Alta Repubblica Avventure (2021) Vol. 1 – Rotta di Collisione","The High Republic Adventures (2021) #1-5"],
+  ["L'Alta Repubblica (2021) Vol. 1 - Non c'è paura","The High Republic (2021) #1-5"],
+  ["L'Alta Repubblica Avventure (2021) Vol. 2 – Missione a Bilbousa","The High Republic Adventures (2021) #6-7 + The High Republic Adventures Annual 2021 #1 + materiale da Free Comic Book Day 2021: The High Republic Adventures"],
+  ["L'Alta Repubblica Avventure – Il Mostro del Picco del Tempio","The High Republic Adventures – The Monster of Temple Peak #1-4"],
+  ["L'Alta Repubblica (2021) Vol. 2 – Il Cuore dei Drengir","The High Republic (2021) #6-10"],
+  ["L'Alta Repubblica – Pista di Ombre","The High Republic – Trail of Shadows #1-5"],
+  ["L'Alta Repubblica (2021) Vol. 3 – Fine di un Jedi","The High Republic (2021) #11-15 + The High Republic – Eye of the Storm #1-2"],
+  ["L'Alta Repubblica Avventure (2021) Vol. 3 – Per la Luce e per la Vita","The High Republic Adventures (2021) #8-13 + The High Republic Adventures: Galactic Bake-Off Spectacular #1"],
+  ["L'Alta Repubblica – L'Ombra dello Starlight","The High Republic – Shadows of Starlight #1-4"],
+  ["L'Alta Repubblica – Occhio della Tempesta","The High Republic – Eye of the Storm #1-2"],
+  ["L'Alta Repubblica Avventure – Il Terrore Senza Nome","The High Republic Adventures – The Nameless Terror #1-4"],
+  ["L'Alta Repubblica Avventure – La Missione dei Jedi","The High Republic Adventures: Quest of the Jedi (2022) #1"],
+  ["L'Alta Repubblica – La Lama","The High Republic – The Blade (2022) #1-4"],
+  ["L'Alta Repubblica Avventure (2022) Vol. 1 – Padawan o Pirata?","The High Republic Adventures (2022) #1-4"],
+  ["L'Alta Repubblica (2022) – L'Equilibrio della Forza","The High Republic (2022) #1-5"],
+  ["L'Alta Repubblica Avventure (2022) Vol. 2 – Salvataggio Pirata","The High Republic Adventures (2022) #5-8 + The High Republic Adventures: Quest of the Jedi #1"],
+  ["L'Alta Repubblica (2022) – Battaglia per la Forza","The High Republic (2022) #6-10"],
+  ["L'Alta Repubblica Avventure (2023) Vol. 1 – Ora o Mai più","The High Republic Adventures (2023) Phase III #1-5"],
+  ["L'Alta Repubblica Avventure – Crash, Zona di Impatto","The High Republic Adventures – Crash and Burn #1 + Crash Zone #1 + The High Republic Adventures Annual 2025 #1"],
+  ["L'Alta Repubblica Avventure (2023) Vol. 2 – Figlie di Nessun Mondo","The High Republic Adventures (2023) Phase III #6-10"],
+  ["L'Alta Repubblica Avventure – Echi di Paura","The High Republic Adventures – Echoes of Fear #1-4"],
+  ["L'Alta Repubblica Avventure – Spada a Pagamento","The High Republic Adventures – Saber for Hire #1-4"],
+  ["L'Alta Repubblica (2023) Vol. 1 – Figli della Tempesta","The High Republic (2023) #1-4 + Star Wars: Revelations (2023) #1"],
+  ["L'Alta Repubblica (2023) Vol. 2 – La Preda","The High Republic (2023) #6-10 + The Acolyte: Kelnacca #1"],
+  ["L'Alta Repubblica Avventure (2023) Vol. 3 – Rivolta Dietro il Murotempesta","The High Republic Adventures (2023) Phase III #11-13 + The High Republic Adventures – The Wedding Spectacular #1"],
+  ["L'Alta Repubblica Avventure – Dispacci dalla Zona di Occlusione","The High Republic – Dispatches from the Occlusion Zone #1-4"],
+  ["L'Alta Repubblica Avventure (2023) Vol. 4 – La Battaglia di Eriadu","The High Republic Adventures (2023) Phase III #14-16 + The High Republic Adventures – The Battle of Eriadu #1"],
+  ["L'Alta Repubblica – La Paura dei Jedi","The High Republic – Fear of the Jedi #1-5 + The High Republic – Finale #1"],
+  ["L'Alta Repubblica Avventure (2023) Vol. 5 – Lo Scontro Finale","The High Republic Adventures (2023) Phase III #17-20"],
+  ["L'Alta Repubblica – Il Finale","The High Republic – Finale #1"],
+  ["The Acolyte – Kelnacca","The Acolyte: Kelnacca #1"],
+  ["L'Età della Repubblica – Nemici: Darth Maul","Age of Republic – Darth Maul #1"],
+  ["Storie dall'Iperspazio – Qui-Gon Jinn","Hyperspace Stories: Qui-Gon"],
+  ["Jedi della Repubblica – Mace Windu","Jedi of the Republic – Mace Windu #1-5"],
+  ["Star Wars: Storie dall'Iperspazio – Grievous","Hyperspace Stories: Grievous"],
+  ["L'Età della Repubblica – Eroi: Anakin Skywalker","Age of Republic – Anakin Skywalker #1"],
+  ["Storie dall'Iperspazio – The Bad Batch: Agenti Fantasma","Hyperspace Stories – The Bad Batch: Ghost Agents #1-5"],
+  ["L'Età della Repubblica – Nemici: Generale Grievous","Age of Republic – General Grievous #1"],
+  ["Kanan - L'ultimo padawan","Kanan (2015) #1-12"],
+  ["Darth Maul – Figlio di Dathomir","Darth Maul: Son of Dathomir #1-4"],
+  ["L'Età della Repubblica – Eroi: Padmé Amidala","Age of Republic – Padmé Amidala #1"],
+  ["Mace Windu – Missione al Crepuscolo","Mace Windu (2024) #1-4 + Star Wars: Revelations (2023) #1 (storia di Mace Windu)"],
+  ["Cavalieri Jedi (2025) Vol. 1 – Guardiani della Repubblica","Star Wars: Jedi Knights (2025) #1-5 + materiale da Free Comic Book Day 2025: Star Wars #1"],
+  ["L'Età della Repubblica – Eroi: Qui-Gon Jinn","Age of Republic – Qui-Gon Jinn #1"],
+  ["Darth Maul","Darth Maul (2017) #1-5"],
+  ["Jango Fett – Sulle Tracce della Speranza Perduta","Jango Fett (2024) #1-4 + Star Wars: Revelations (2023) #1 (storia di Jango Fett)"],
+  ["L'Età della Repubblica – Eroi: Obi-Wan Kenobi","Age of Republic – Obi-Wan Kenobi #1"],
+  ["Obi-Wan e Anakin","Obi-Wan & Anakin #1-5"],
+  ["L'Età della Repubblica – Nemici: Conte Dooku","Age of Republic – Count Dooku #1"],
+  ["Storie dall'Iperspazio – Abissi di Terrore","Hyperspace Stories – Tides of Terror #1-4"],
+  ["L'Età della Repubblica – Nemici: Jango Fett","Age of Republic – Jango Fett #1"],
+  ["Darth Vader (2017) Vol. 1 – Macchina Imperiale","Darth Vader (2017) #1-6 + breve 'No Good Deed...'"],
+  ["Darth Vader (2017) Vol. 2 – La Luce Morente","Darth Vader (2017) #7-12"],
+  ["Darth Vader (2017) Vol. 3 – Mari Infuocati","Darth Vader (2017) #13-18 + Darth Vader Annual #2"],
+  ["Thrawn","Thrawn (2018) #1-6"],
+  ["Darth Vader (2017) Vol. 4 – Fortezza Vader","Darth Vader (2017) #19-25"],
+  ["Jedi: Fallen Order – Il Tempio Oscuro","Jedi: Fallen Order – Dark Temple #1-5"],
+  ["La Storia Segreta di Star Wars: Beckett","Beckett #1"],
+  ["Solo: A Star Wars Story","Solo: A Star Wars Story Adaptation #1-7"],
+  ["Han Solo – Cadetto Imperiale","Han Solo – Imperial Cadet #1-5"],
+  ["Inquisitori","Inquisitors (2024) #1-4"],
+  ["Lando – Lascia o Raddoppia","Lando – Double or Nothing #1-5"],
+  ["Han Solo e Chewbacca – Un Gioco da Ragazzi","Han Solo & Chewbacca #1-5 + Star Wars: Life Day #1"],
+  ["Han Solo e Chewbacca Vol. 2 – Vivi o Morti","Han Solo & Chewbacca #6-10"],
+  ["Rogue One: A Star Wars Story","Rogue One: A Star Wars Story Adaptation #1-6"],
+  ["L'Età della Ribellione – Nemici: Grand Moff Tarkin","Age of Rebellion – Grand Moff Tarkin #1"],
+  ["Principessa Leia","Princess Leia #1-5"],
+  ["L'Età della Ribellione – Eroi: Han Solo","Age of Rebellion – Han Solo #1"],
+  ["Lando","Lando #1-5"],
+  ["Chewbacca","Chewbacca #1-5"],
+  ["Han Solo","Han Solo #1-5"],
+  ["Star Wars (2015) Vol. 1 – Skywalker Colpisce","Star Wars (2015) #1-6"],
+  ["Darth Vader (2015) Vol. 1 – Vader","Darth Vader (2015) #1-6"],
+  ["Star Wars (2015) Vol. 2 – Resa dei Conti sulla Luna dei Contrabbandieri","Star Wars (2015) #7-12"],
+  ["Darth Vader (2015) Vol. 2 – Ombre e Segreti","Darth Vader (2015) #7-12"],
+  ["Vader Colpito","Vader Down #1 + Darth Vader (2015) #13-15 + Star Wars (2015) #13-14"],
+  ["Star Wars (2015) Vol. 3 – Prigione Ribelle","Star Wars (2015) #15-19 + Star Wars Annual (2015) #1"],
+  ["Darth Vader (2015) Vol. 3 – La Guerra di Shu-Torun","Darth Vader (2015) #16-19 + Darth Vader Annual #1"],
+  ["Darth Vader (2015) Vol. 4 – Fine dei Giochi","Darth Vader (2015) #20-25"],
+  ["Star Wars (2015) Vol. 4 – L'Ultimo Volo della Harbinger","Star Wars (2015) #20-25 + breve 'Droid Dilemma'"],
+  ["Star Wars (2015) Vol. 5 – La Guerra Segreta di Yoda","Star Wars (2015) #26-30 + Star Wars Annual (2015) #2"],
+  ["Dottoressa Aphra (2016) Vol. 1 – Aphra","Doctor Aphra (2016) #1-6"],
+  ["La Cittadella Urlante","The Screaming Citadel #1 + Star Wars (2015) #31-32 + Doctor Aphra (2016) #7-8"],
+  ["Dottoressa Aphra (2016) Vol. 2 – L'Enorme Profitto","Doctor Aphra (2016) #9-13 + Doctor Aphra Annual #1"],
+  ["Star Wars (2015) Vol. 6 – Tra le Stelle","Star Wars (2015) #33-37 + Star Wars Annual (2015) #3 + breve 'The Sand Will Provide'"],
+  ["Star Wars (2015) Vol. 7 – Le Ceneri di Jedha","Star Wars (2015) #38-43"],
+  ["Star Wars (2015) Vol. 8 – Ammutinamento su Mon Cala","Star Wars (2015) #44-49"],
+  ["La Storia Segreta di Star Wars: Gli Ultimi Jedi - Le Tempeste di Crait","The Storms of Crait #1"],
+  ["Dottoressa Aphra (2016) Vol. 3 – Padronanza","Doctor Aphra (2016) #14-19"],
+  ["Dottoressa Aphra (2016) Vol. 4 – La Prigione della Morte","Doctor Aphra (2016) #20-25"],
+  ["Dottoressa Aphra (2016) Vol. 5 – Peggiore tra i Pari","Doctor Aphra (2016) #26-31 + Doctor Aphra Annual #2"],
+  ["Star Wars (2015) Vol. 9 – La Speranza Muore","Star Wars (2015) #50-55 + Star Wars Annual (2015) #4 + breve 'Shu-Torun Lives'"],
+  ["L'Età della Ribellione – Eroi: Lando Calrissian","Age of Rebellion – Lando Calrissian #1"],
+  ["L'Età della Ribellione – Nemici: Jabba the Hutt","Age of Rebellion – Jabba the Hutt #1"],
+  ["Star Wars (2015) Vol. 10 – La Fuga","Star Wars (2015) #56-61"],
+  ["Star Wars (2015) Vol. 11 – La Flagellazione di Shu-Torun","Star Wars (2015) #62-67"],
+  ["Dottoressa Aphra (2016) Vol. 6 – Indicibile Superarma Ribelle","Doctor Aphra (2016) #32-36"],
+  ["Dottoressa Aphra (2016) Vol. 7 – La Fine di una Criminale","Doctor Aphra (2016) #37-40 + Doctor Aphra Annual #3 + materiale da Empire Ascendant #1"],
+  ["Star Wars (2015) Vol. 12 – Ribelli e Banditi","Star Wars (2015) #68-72"],
+  ["Star Wars (2015) Vol. 13 – Banditi e Ribelli","Star Wars (2015) #73-75 + Empire Ascendant #1"],
+  ["L'Età della Ribellione – Nemici: Boba Fett","Age of Rebellion – Boba Fett #1"],
+  ["Yoda","Yoda (2022) #1-10"],
+  ["Star Wars (2020) Vol. 1 – La Strada del Destino","Star Wars (2020) #1-6"],
+  ["Darth Vader (2020) Vol. 1 – Il Cuore Nero dei Sith","Darth Vader (2020) #1-5"],
+  ["Cacciatori di Taglie (2020) Vol. 1 – I Più Letali della Galassia","Bounty Hunters (2020) #1-5 + materiale da Star Wars: Empire Ascendant #1"],
+  ["Dottoressa Aphra (2020) Vol. 1 – Fortuna e Fato","Doctor Aphra (2020) #1-5"],
+  ["Star Wars (2020) Vol. 2 – Operazione Starlight","Star Wars (2020) #7-11"],
+  ["Darth Vader (2020) Vol. 2 – Tra le Fiamme","Darth Vader (2020) #6-11"],
+  ["Cacciatori di Taglie (2020) Vol. 2 – Obiettivo Valance","Bounty Hunters (2020) #6-11"],
+  ["Dottoressa Aphra (2020) Vol. 2 – Il Motore Perduto","Doctor Aphra (2020) #6-10"],
+  ["La Guerra dei Cacciatori di Taglie","War of the Bounty Hunters Alpha #1 + War of the Bounty Hunters #1-5 + Jabba the Hutt #1 + 4-LOM & Zuckuss #1 + Boushh #1 + IG-88 #1"],
+  ["Star Wars (2020) Vol. 3 – La Guerra dei Cacciatori di Taglie","Star Wars (2020) #12-18"],
+  ["Darth Vader (2020) Vol. 3 – La Guerra dei Cacciatori di Taglie","Darth Vader (2020) #12-17"],
+  ["Cacciatori di Taglie (2020) Vol. 3 – La Guerra dei Cacciatori di Taglie","Bounty Hunters (2020) #12-17"],
+  ["Dottoressa Aphra (2020) Vol. 3 – La Guerra dei Cacciatori di Taglie","Doctor Aphra (2020) #11-15"],
+  ["Regno Cremisi","Crimson Reign #1-5"],
+  ["Star Wars (2020) Vol. 4 – Regno Cremisi","Star Wars (2020) #19-25"],
+  ["Darth Vader (2020) Vol. 4 – Regno Cremisi","Darth Vader (2020) #18-22"],
+  ["Cacciatori di Taglie (2020) Vol. 4 – Regno Cremisi","Bounty Hunters (2020) #18-22"],
+  ["Dottoressa Aphra (2020) Vol. 4 – Regno Cremisi","Doctor Aphra (2020) #16-20"],
+  ["Rivelazioni","Star Wars: Revelations (2022) #1"],
+  ["Impero Segreto","Hidden Empire #1-5"],
+  ["Star Wars (2020) Vol. 5 – La Strada Verso la Vittoria","Star Wars (2020) #26-30"],
+  ["Darth Vader (2020) Vol. 5 – L'Ombra dell'Ombra","Darth Vader (2020) #23-27"],
+  ["Dottoressa Aphra (2020) Vol. 5 – La Scintilla Eterna","Doctor Aphra (2020) #21-25"],
+  ["Cacciatori di Taglie (2020) Vol. 5 – Assalto al Vermillion","Bounty Hunters (2020) #23-28"],
+  ["Star Wars (2020) Vol. 6 – Le Prove della Forza","Star Wars (2020) #31-36"],
+  ["Darth Vader (2020) Vol. 6 – Il Ritorno delle Ancelle","Darth Vader (2020) #28-32"],
+  ["Dottoressa Aphra (2020) Vol. 6 – Ascendente","Doctor Aphra (2020) #26-31"],
+  ["Cacciatori di Taglie (2020) Vol. 6 – Bolgia su Bestine","Bounty Hunters (2020) #29-34"],
+  ["Sana Starros – Affari di Famiglia","Sana Starros #1-5"],
+  ["Darth Vader (2020) Vol. 7 – Forza Incontrollata","Darth Vader (2020) #33-36 + Darth Vader (2015) #3"],
+  ["Droidi Oscuri","Dark Droids #1-5"],
+  ["Droidi Oscuri – Squadra D","Dark Droids: D-Squad #1-4"],
+  ["Star Wars (2020) Vol. 7 – Droidi Oscuri","Star Wars (2020) #37-41"],
+  ["Darth Vader (2020) Vol. 8 – Droidi Oscuri","Darth Vader (2020) #37-41"],
+  ["Cacciatori di Taglie (2020) Vol. 7 – Droidi Oscuri","Bounty Hunters (2020) #35-42"],
+  ["Dottoressa Aphra (2020) Vol. 7 – Droidi Oscuri","Doctor Aphra (2020) #32-40 + storia 'Tall Tales' da Star Wars: Revelations (2023) #1"],
+  ["Star Wars (2020) Vol. 8 – Sith e Skywalker","Star Wars (2020) #42-46 + Star Wars: Revelations (2023) #1 + Free Comic Book Day 2024: Star Wars"],
+  ["Darth Vader (2020) Vol. 9 – L'Ascesa dello Scisma Imperiale","Darth Vader (2020) #42-47 + Star Wars: Revelations (2023) #1 + Free Comic Book Day 2024: Star Wars #1"],
+  ["Star Wars (2020) Vol. 9 – Il Cammino della Speranza","Star Wars (2020) #48-50"],
+  ["Darth Vader (2020) Vol. 10 – Fantasmi","Darth Vader (2020) #48-50 + Star Wars: The Phantom Menace 25th Anniversary Special #1"],
+  ["L'Età della Ribellione – Eroi: Principessa Leia","Age of Rebellion – Princess Leia #1"],
+  ["Il Ritorno dello Jedi – Canaglie, Ribelli e l'Impero","Return of the Jedi – Jabba's Palace #1 + Ewoks #1 + Lando #1 + The Empire #1 + The Rebellion #1 + Max Rebo #1 + Return of the Jedi – The 40th Anniversary Covers #1"],
+  ["Caccia TIE","TIE Fighter #1-5"],
+  ["L'Età della Ribellione – Eroi: Luke Skywalker","Age of Rebellion – Luke Skywalker #1"],
+  ["L'Impero a Pezzi","Shattered Empire #1-4"],
+  ["La Battaglia di Jakku","Battle of Jakku – Insurgency Rising #1-4 + Republic Under Siege #1-4 + Last Stand #1-4"],
+  ["Ewok – Minaccia dalle Stelle","Ewoks (2024) #1-4"],
+  ["Star Wars Rebels – In Nome della Ribellione","Minifumetti canonici da Star Wars Rebels Magazine"],
+  ["La Storia Segreta di Star Wars: Rogue One – Cassian & K-2SO Special","Rogue One – Cassian & K-2SO Special #1"],
+  ["L'Età della Ribellione – Nemici: Darth Vader","Age of Rebellion – Darth Vader #1"],
+  ["Thrawn – Alleanze (Fumetto)","Thrawn – Alliances #1-4"],
+  ["Bersaglio Vader","Target Vader #1-6"],
+  ["Obi-Wan – Il Fine di un Jedi","Obi-Wan (2022) #1-5"],
+  ["Star Wars (2025) – Nuova Repubblica","Star Wars (2025) #1-10 + materiale da Free Comic Book Day 2025: Star Wars #1"],
+  ["Dottoressa Aphra (2025) – Agente del Caos","Doctor Aphra – Chaos Agent (2025) #1-5"],
+  ["L'Età della Resistenza – Eroi: Rose Tico","Age of Resistance – Rose Tico #1"],
+  ["L'Ascesa di Kylo Ren","The Rise of Kylo Ren #1-4"],
+  ["L'Età della Resistenza – Nemici: Leader Supremo Snoke","Age of Resistance – Supreme Leader Snoke #1"],
+  ["Han Solo: Caccia al Falcon","Han Solo – The Hunt for the Falcon #1-5"],
+  ["L'Età della Resistenza – Eroi: Poe Dameron","Age of Resistance – Poe Dameron #1"],
+  ["Poe Dameron Vol. 1 – Squadriglia Nera","Poe Dameron (2016) #1-6 + storia breve 'SaBBotage'"],
+  ["La Storia Segreta di Star Wars: C-3PO - L'Arto Fantasma","C-3PO – The Phantom Limb #1"],
+  ["L'Età della Resistenza – Eroi: Finn","Age of Resistance – Finn #1"],
+  ["L'Età della Resistenza – Nemici: Generale Hux","Age of Resistance – General Hux #1"],
+  ["L'Età della Resistenza – Nemici: Kylo Ren","Age of Resistance – Kylo Ren #1"],
+  ["Poe Dameron Vol. 2 – Minaccia Incombente","Poe Dameron (2016) #8-13"],
+  ["Poe Dameron Vol. 3 – Leggenda Perduta","Poe Dameron (2016) #7 + #14-19"],
+  ["Poe Dameron Vol. 4 – Leggenda Ritrovata","Poe Dameron (2016) #20-25 + Poe Dameron Annual #1"],
+  ["Storie dall'Iperspazio – Il Decifratore","Hyperspace Stories – Codebreaker #1-4"],
+  ["L'Età della Resistenza – Nemici: Capitano Phasma","Age of Resistance – Captain Phasma #1"],
+  ["Il Risveglio della Forza (Fumetto)","The Force Awakens Adaptation #1-6"],
+  ["Capitano Phasma","Captain Phasma #1-4"],
+  ["L'Età della Resistenza – Eroi: Rey","Age of Resistance – Rey #1"],
+  ["La Storia Segreta di Star Wars: DJ – Ricercato","The Last Jedi – DJ: Most Wanted #1"],
+  ["Gli Ultimi Jedi (Fumetto)","The Last Jedi Adaptation #1-6"],
+  ["L'Eredità di Vader (2025) – Il Regno di Kylo Ren","Legacy of Vader (2025) #1-6 + materiale da Free Comic Book Day 2025: Star Wars #1"],
+  ["Poe Dameron Vol. 5 - La Scintilla e la Fiamma","Poe Dameron (2016) #26-31 + Poe Dameron Annual #2"],
+  ["Lealtà","Allegiance #1-4"],
+  ["Galaxy's Edge – Ai Margini della Galassia","Galaxy's Edge #1-5"],
+  ["Halcyon Legacy","Halcyon Legacy #1-5"],
+  ["Ci vediamo in giro, Ragazzo","Star Wars (2020) #25 – storia 'See You Around, Kid'"],
+  ["L'Ascesa di Skywalker (Fumetto)","The Rise of Skywalker (2025) #1-5"],
+  ["Un Elogio per Snap","Star Wars (2020) #25 – storia 'A Eulogy for Snap'"],
+  ["Storie dallo Spazio Profondo","Star Wars Adventures (2017) #1-2"],
+  ["Il Blues del Contrabbandiere","Star Wars Adventures (2017) #10-11 + storia 'The Lost Eggs of Livorno' da Star Wars Adventures Annual 2018"],
+  ["Darth Maul – Black, White & Red","Darth Maul – Black, White & Red #1-4"],
+  ["Darth Vader: Black, White & Red","Darth Vader – Black, White & Red #1-4"],
+  ["Boba Fett: Black, White & Red","Boba Fett – Black, White & Red #1-4"],
+  ["Vader – Visioni Oscure","Vader: Dark Visions #1-5"],
+  ["Guardatevi dal Castello di Vader","Tales from Vader's Castle #1-5 + Return to Vader's Castle #1-5 + Shadow of Vader's Castle #1 + Ghosts of Vader's Castle #1-5 + Free Comic Book Day 2019: Star Wars Adventures #1"],
+  ["Racconti Galattici del Terrore","Tales from the Death Star (graphic novel) + Tales from the Rancor Pit (graphic novel) + Tales from the Nightlands #1-3"],
+  ["Storie dall'Iperspazio (2022) Vol. 1 – Ribelli e Resistenza","Hyperspace Stories (2022) #1-4"],
+  ["Storie dall'Iperspazio (2022) Vol. 2 – Feccia e Malvagità","Hyperspace Stories (2022) #5-8"],
+  ["Storie dall'Iperspazio (2022) Vol. 3 – Luci e Ombre","Hyperspace Stories (2022) #9-12 + Hyperspace Stories Annual – Jaxxon 2023 #1"],
+]);
+
+const RACCOLTE_ONE_SHOT_DIRETTE = new Map([
+  ["L'Alta Repubblica Avventure – La Missione dei Jedi","L'Alta Repubblica Avventure (2022) Vol. 2 – Salvataggio Pirata"],
+  ["L'Alta Repubblica – Il Finale","L'Alta Repubblica – La Paura dei Jedi"],
+  ["The Acolyte – Kelnacca","L'Alta Repubblica (2023) Vol. 2 – La Preda"],
+  ["Ci vediamo in giro, Ragazzo","Star Wars (2020) Vol. 4 – Regno Cremisi"],
+  ["Un Elogio per Snap","Star Wars (2020) Vol. 4 – Regno Cremisi"],
+]);
+
+function raccoltaOneShot(titolo){
+  if(RACCOLTE_ONE_SHOT_DIRETTE.has(titolo)) return RACCOLTE_ONE_SHOT_DIRETTE.get(titolo);
+  const raccoltaEta = titolo.match(/^(L'Età della (?:Repubblica|Ribellione|Resistenza) – (?:Eroi|Nemici)):/);
+  if(raccoltaEta) return raccoltaEta[1];
+  if(titolo.startsWith("La Storia Segreta di Star Wars:")) return "La Storia Segreta di Star Wars";
+  return "";
+}
+
 const TIPO_LAB = {film:"Film",serie:"Serie TV",animazione:"Animazione",corto:"Corto",
                   romanzo:"Romanzo",fumetto:"Fumetto",gioco:"Videogioco",manga:"Manga",audiolibro:"Audiolibro"};
 
@@ -2009,6 +2320,7 @@ const TIPI_FILTRO = ["film","serie","corto","gioco","romanzo","fumetto","manga",
 const state = {q:"", tipi:new Set(TIPI_FILTRO)};
 const schedeIngrandite = new Set();
 const guideEpisodiAperte = new Set();
+const guideFumettiAperte = new Set();
 const vistaMobile = matchMedia("(max-width:700px)");
 const SELETTORE_SCHEDE_MOBILI =
   '.item[data-opera-tipo="romanzo"],.item[data-opera-tipo="fumetto"],.item[data-opera-tipo="manga"],.item[data-opera-tipo="audiolibro"]';
@@ -2168,19 +2480,45 @@ function pannelloCloneWars(o, aperto){
   </div>`;
 }
 
+function pannelloFumetto(o, aperto){
+  const contenuti = CONTENUTI_FUMETTI.get(o.ti) || "";
+  const raccolta = raccoltaOneShot(o.ti);
+  const numeri = contenuti.split(/\s+\+\s+/).filter(Boolean);
+  const righe = numeri.map(numero=>`<li>${esc(numero)}</li>`).join("");
+  return `<div class="comic-guide" id="contenuti-${o.id}" aria-hidden="${String(!aperto)}">
+    <div class="comic-guide-clip">
+      <section class="comic-guide-card" aria-label="Numeri contenuti in ${esc(o.ti)}">
+        <strong class="comic-guide-title">Numeri contenuti</strong>
+        <ul class="comic-contents-list">${righe}</ul>
+        ${raccolta?`<p class="comic-collection-note">
+          <span>Incluso nella raccolta</span>
+          <strong>${esc(raccolta)}</strong>
+        </p>`:""}
+      </section>
+    </div>
+  </div>`;
+}
+
 function voce(o, lato){
   const tipo = tipoGerarchico(o);
   const tipoLab = etichettaTipo(o);
   const sottotitolo = o.stagioni || o.dettaglio || "";
   const espandibile = ["romanzo","fumetto","manga","audiolibro"].includes(tipo);
   const haGuidaEpisodi = o.guidaEpisodi === "clone-wars";
+  const haGuidaFumetto = tipo === "fumetto" && CONTENUTI_FUMETTI.has(o.ti);
   const guidaAperta = haGuidaEpisodi && guideEpisodiAperte.has(o.id);
-  const tagTesta = haGuidaEpisodi ? "button" : "div";
+  const fumettoAperto = haGuidaFumetto && guideFumettiAperte.has(o.id);
+  const interattiva = haGuidaEpisodi || haGuidaFumetto;
+  const tagTesta = interattiva ? "button" : "div";
+  const idPannello = haGuidaEpisodi ? `guida-${o.id}` : `contenuti-${o.id}`;
+  const ariaLabel = haGuidaEpisodi
+    ? `${guidaAperta?"Chiudi":"Apri"} l'ordine cronologico degli episodi di The Clone Wars`
+    : `${fumettoAperto?"Chiudi":"Apri"} i numeri contenuti in ${o.ti}`;
   const meta = [tipoLab, o.rl].concat(o.lg?["Legends"]:[]);
   const mostraImg = COPERTINE_ATTIVE && o.img;
   const src = mostraImg ? `<img data-shot src="immagini/${esc(o.img)}?v=${CACHE_BUST}" alt="" draggable="false" loading="lazy" decoding="async" fetchpriority="low">` : "";
-  return `<li class="item ${lato} ${o.lg?"legends":""} ${schedeIngrandite.has(o.id)?"mobile-ingrandita":""} ${haGuidaEpisodi?"has-episode-guide":""} ${guidaAperta?"episode-guide-open":""}" id="opera-${o.id}" data-opera-tipo="${esc(tipo)}">
-    <${tagTesta} class="head"${haGuidaEpisodi?` type="button" aria-expanded="${String(guidaAperta)}" aria-controls="guida-${o.id}" aria-label="${guidaAperta?"Chiudi":"Apri"} l'ordine cronologico degli episodi di The Clone Wars"`:""}>
+  return `<li class="item ${lato} ${o.lg?"legends":""} ${schedeIngrandite.has(o.id)?"mobile-ingrandita":""} ${haGuidaEpisodi?"has-episode-guide":""} ${guidaAperta?"episode-guide-open":""} ${haGuidaFumetto?"has-comic-guide":""} ${fumettoAperto?"comic-guide-open":""}" id="opera-${o.id}" data-opera-tipo="${esc(tipo)}">
+    <${tagTesta} class="head"${interattiva?` type="button" aria-expanded="${String(guidaAperta || fumettoAperto)}" aria-controls="${idPannello}" aria-label="${esc(ariaLabel)}"`:""}>
       <figure class="shot${mostraImg?"":" vuoto"}" data-tipo="${esc(tipoLab)}">${src}</figure>
       <span class="txt">
         <span class="yr">${esc(o.yl)}</span>
@@ -2188,9 +2526,10 @@ function voce(o, lato){
         ${sottotitolo?`<span class="stagioni">${esc(sottotitolo)}</span>`:""}
         <span class="meta">${meta.map(m=>`<span>${esc(m)}</span>`).join("")}</span>
       </span>
-      ${haGuidaEpisodi?'<span class="episode-expand" aria-hidden="true"></span>':""}
+      ${interattiva?'<span class="episode-expand" aria-hidden="true"></span>':""}
     </${tagTesta}>
     ${haGuidaEpisodi?pannelloCloneWars(o,guidaAperta):""}
+    ${haGuidaFumetto?pannelloFumetto(o,fumettoAperto):""}
     ${espandibile?'<span class="mobile-expand" aria-hidden="true"></span>':""}
   </li>`;
 }
@@ -2203,6 +2542,7 @@ function aggiornaIngombroScheda(scheda){
   if(!vistaMobile.matches){
     scheda.style.removeProperty("height");
     scheda.style.removeProperty("--scala-scheda-mobile");
+    scheda.style.removeProperty("--altezza-testa-mobile");
     return;
   }
   const head = scheda.querySelector(".head");
@@ -2210,7 +2550,12 @@ function aggiornaIngombroScheda(scheda){
   const scala = scheda.classList.contains("mobile-ingrandita")
     ? SCALA_SCHEDA_INGRANDITA : SCALA_SCHEDA_CHIUSA;
   scheda.style.setProperty("--scala-scheda-mobile", scala);
-  scheda.style.height = Math.ceil(head.offsetHeight * scala) + "px";
+  const altezzaTesta = Math.ceil(head.offsetHeight * scala);
+  scheda.style.setProperty("--altezza-testa-mobile", altezzaTesta + "px");
+  const pannelloFumetto = scheda.querySelector(":scope > .comic-guide .comic-guide-clip");
+  const altezzaPannello = scheda.classList.contains("comic-guide-open") && pannelloFumetto
+    ? pannelloFumetto.scrollHeight : 0;
+  scheda.style.height = Math.ceil(altezzaTesta + altezzaPannello) + "px";
 }
 
 function aggiornaIngombriSchede(){
@@ -2510,6 +2855,36 @@ document.addEventListener("click", ev=>{
   impostaGuidaEpisodi(scheda,!scheda.classList.contains("episode-guide-open"));
 });
 
+function impostaGuidaFumetto(scheda, apri){
+  const id = scheda.id.replace(/^opera-/, "");
+  const testa = scheda.querySelector(":scope > .head");
+  const pannello = scheda.querySelector(":scope > .comic-guide");
+  const titolo = scheda.querySelector(":scope > .head .title")?.textContent.trim() || "il fumetto";
+  scheda.classList.toggle("comic-guide-open",apri);
+  testa.setAttribute("aria-expanded",String(apri));
+  testa.setAttribute("aria-label",`${apri?"Chiudi":"Apri"} i numeri contenuti in ${titolo}`);
+  pannello.setAttribute("aria-hidden",String(!apri));
+  if(apri) guideFumettiAperte.add(id);
+  else guideFumettiAperte.delete(id);
+  if(vistaMobile.matches){
+    scheda.classList.toggle("mobile-ingrandita",apri);
+    if(apri) schedeIngrandite.add(id);
+    else schedeIngrandite.delete(id);
+  }
+  aggiornaIngombroScheda(scheda);
+  requestAnimationFrame(()=>aggiornaIngombroScheda(scheda));
+  setTimeout(()=>aggiornaIngombroScheda(scheda),240);
+  programmaProgressoEre();
+  setTimeout(programmaProgressoEre,420);
+}
+
+document.addEventListener("click", ev=>{
+  const testa = ev.target.closest(".item.has-comic-guide > .head");
+  if(!testa) return;
+  const scheda = testa.closest(".item.has-comic-guide");
+  impostaGuidaFumetto(scheda,!scheda.classList.contains("comic-guide-open"));
+});
+
 filters.addEventListener("click", ev=>{
   const btn = ev.target.closest("[data-filter]");
   if(!btn) return;
@@ -2524,13 +2899,18 @@ filters.addEventListener("click", ev=>{
 
 document.addEventListener("click", ev=>{
   if(!vistaMobile.matches) return;
-  const scheda = ev.target.closest(SELETTORE_SCHEDE_MOBILI);
+  const testa = ev.target.closest(".item > .head");
+  if(!testa) return;
+  const scheda = testa.closest(SELETTORE_SCHEDE_MOBILI);
   if(!scheda) return;
+  if(scheda.classList.contains("has-comic-guide")) return;
   const id = scheda.id.replace(/^opera-/, "");
   const ingrandita = scheda.classList.toggle("mobile-ingrandita");
   if(ingrandita) schedeIngrandite.add(id);
   else schedeIngrandite.delete(id);
   aggiornaIngombroScheda(scheda);
+  requestAnimationFrame(()=>aggiornaIngombroScheda(scheda));
+  setTimeout(()=>aggiornaIngombroScheda(scheda),240);
 });
 
 let deb;
