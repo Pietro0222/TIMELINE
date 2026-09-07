@@ -779,6 +779,7 @@ body{
 .back-top span::before{top:1px}
 .back-top span::after{top:9px}
 .jump-transition{display:none}
+.jump-line-fade{display:none}
 @media (max-width:700px){
   /* Nei salti molto lunghi il webview non deve ridisegnare tutta la timeline.
      Questa velatura riproduce la linea e le schede in rapido movimento: il
@@ -799,9 +800,9 @@ body{
     content:"";position:absolute;top:-116px;bottom:-116px;
     left:calc(var(--timeline-x) - 10px);width:20px;opacity:0;
     background:
-      radial-gradient(circle,rgba(151,184,222,.88) 0 3px,
-        rgba(91,132,181,.4) 4px,transparent 6px) center 18px/20px 116px repeat-y,
-      linear-gradient(to right,transparent 9px,rgba(117,150,188,.42) 9px 11px,
+      radial-gradient(circle,rgba(151,169,190,.68) 0 2.5px,
+        rgba(119,139,161,.28) 3.5px,transparent 5.5px) center 18px/20px 116px repeat-y,
+      linear-gradient(to right,transparent 9px,rgba(133,153,176,.32) 9px 11px,
         transparent 11px) center/20px 100% no-repeat;
     filter:blur(.35px);transform:translate3d(0,0,0);
     transition:opacity .11s ease
@@ -826,19 +827,53 @@ body{
     transition:opacity .22s ease,visibility 0s
   }
   .jump-transition.is-visible::before{
-    opacity:.72;animation:timelineRush .24s linear infinite
+    opacity:.64;animation:timelineRushDown .72s linear both
   }
   .jump-transition.is-visible::after{
-    opacity:.9;animation:timelineRush .24s linear infinite
+    opacity:.9;animation:timelineRushDown .72s linear both
   }
   .jump-transition.is-visible.verso-alto::before,
-  .jump-transition.is-visible.verso-alto::after{animation-direction:reverse}
+  .jump-transition.is-visible.verso-alto::after{animation-name:timelineRushUp}
+  /* La linea continua a muoversi, mentre queste due velature restano ferme:
+     punti e tratto verticale nascono e scompaiono dolcemente ai bordi. */
+  .jump-line-fade{
+    display:block;position:absolute;z-index:1;top:0;bottom:0;
+    left:calc(var(--timeline-x) - 13px);width:26px;pointer-events:none
+  }
+  .jump-line-fade::before,.jump-line-fade::after{
+    content:"";position:absolute;left:0;width:100%;height:min(18vh,120px)
+  }
+  .jump-line-fade::before{
+    top:0;background:linear-gradient(to bottom,#020409 0%,rgba(2,4,9,.94) 24%,transparent 100%)
+  }
+  .jump-line-fade::after{
+    bottom:0;background:linear-gradient(to top,#020409 0%,rgba(2,4,9,.94) 24%,transparent 100%)
+  }
   .jump-transition.is-exiting{
     opacity:0;pointer-events:none;
-    transition:opacity .18s cubic-bezier(.22,.72,.24,1),visibility 0s linear .18s
+    transition:opacity .26s cubic-bezier(.22,.72,.24,1),visibility 0s linear .26s
   }
-  @keyframes timelineRush{
-    to{transform:translate3d(0,-116px,0)}
+  /* La parte centrale resta rapida, ma l'ultimo quarto percorre pochi pixel:
+     la sagoma arriva allo scroll reale gia' visibilmente rallentata. */
+  @keyframes timelineRushDown{
+    0%{transform:translate3d(0,0,0)}
+    18%{transform:translate3d(0,-8px,0)}
+    40%{transform:translate3d(0,-58px,0)}
+    55%{transform:translate3d(0,-83px,0)}
+    70%{transform:translate3d(0,-100px,0)}
+    82%{transform:translate3d(0,-109px,0)}
+    92%{transform:translate3d(0,-113px,0)}
+    100%{transform:translate3d(0,-116px,0)}
+  }
+  @keyframes timelineRushUp{
+    0%{transform:translate3d(0,0,0)}
+    18%{transform:translate3d(0,8px,0)}
+    40%{transform:translate3d(0,58px,0)}
+    55%{transform:translate3d(0,83px,0)}
+    70%{transform:translate3d(0,100px,0)}
+    82%{transform:translate3d(0,109px,0)}
+    92%{transform:translate3d(0,113px,0)}
+    100%{transform:translate3d(0,116px,0)}
   }
 }
 #list{min-height:calc(100vh - var(--bar-h))}
@@ -932,6 +967,25 @@ body{
 
 /* sotto i 700px la linea si sposta a sinistra: una colonna sola */
 @media (max-width:700px){
+  /* Riserva separata per i WebView iOS: durante il rientro verso la cima
+     WebKit puo' perdere per un fotogramma i livelli fixed complessi. Questo
+     fondale semplice, senza filtri o trasformazioni, sporge anche oltre il
+     viewport e resta nascosto dietro #sky finche' non serve. */
+  body::before{
+    content:"";position:fixed;z-index:0;pointer-events:none;
+    top:-40vh;right:0;bottom:-40vh;left:0;
+    top:-40lvh;bottom:-40lvh;
+    background-color:#03050B;
+    background-image:
+      radial-gradient(circle at 23px 31px,rgba(242,247,255,.42) 0 .65px,transparent .95px),
+      radial-gradient(circle at 91px 137px,rgba(193,216,250,.3) 0 .7px,transparent 1px),
+      radial-gradient(circle at 211px 83px,rgba(255,237,207,.24) 0 .75px,transparent 1.1px),
+      radial-gradient(ellipse 90% 55% at 12% 18%,rgba(38,67,112,.22),transparent 68%),
+      linear-gradient(180deg,#080D19 0%,#03050C 48%,#060814 78%,#020308 100%);
+    background-size:173px 211px,257px 331px,389px 487px,auto,auto;
+    background-position:0 0,37px 59px,83px 127px,0 0,0 0;
+    background-repeat:repeat,repeat,repeat,no-repeat,no-repeat
+  }
   /* 100lvh usa l'altezza massima stabile del webview: l'apertura della
      barra di Telegram non lascia scoperto il bordo del campo stellare. */
   @supports (height:100lvh){
@@ -1303,7 +1357,9 @@ body{
 <button class="back-top" id="backTop" type="button" aria-label="Torna all'inizio">
   <span aria-hidden="true"></span>
 </button>
-<div class="jump-transition" id="jumpTransition" aria-hidden="true"></div>
+<div class="jump-transition" id="jumpTransition" aria-hidden="true">
+  <span class="jump-line-fade"></span>
+</div>
 
 <script>
 /* Le immagini sono elementi visivi del sito, non oggetti trascinabili. */
@@ -2848,7 +2904,11 @@ function ripristinaPosizioneTimeline(posizione){
    e trascinamento touch finche' l'animazione non e' arrivata a destinazione */
 let scrollAnimId = null, scrollBlocco = null, scrollSaltoTimer = null;
 function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
-function easeOutQuad(t){ return 1-(1-t)*(1-t); }
+function easeInOutQuart(t){
+  return t < .5 ? 8*t*t*t*t : 1-Math.pow(-2*t+2,4)/2;
+}
+function easeInQuad(t){ return t*t; }
+function easeOutSine(t){ return Math.sin(Math.PI*t/2); }
 function aggiornaDopoScrollProtetto(){
   ultimaEpocaAttiva = "";
   aggiornaRibbon(true);
@@ -2912,9 +2972,11 @@ function scrollaProtetto(el){
     && Math.abs(distanza) > Math.max(2200,innerHeight*3);
 
   if(!saltoMobileLungo){
-    const durata = movimentoRidotto ? 1
-      : Math.min(620,Math.max(360,Math.abs(distanza)*.4));
-    animaTrattoScroll(startY,targetY,durata);
+    const durata = movimentoRidotto ? 1 : vistaMobile.matches
+      ? Math.min(620,Math.max(360,Math.abs(distanza)*.4))
+      : Math.min(4000,Math.max(1200,850+Math.sqrt(Math.abs(distanza))*13.8));
+    animaTrattoScroll(startY,targetY,durata,terminaScrollProtetto,
+      vistaMobile.matches ? easeInOutCubic : easeInOutQuart);
     return;
   }
 
@@ -2926,16 +2988,16 @@ function scrollaProtetto(el){
   const trattoCopertura = Math.min(320,Math.max(200,innerHeight*.3));
   const ingressoY = Math.max(0,Math.min(maxY,
     startY+verso*(trattoVisibileInizio+trattoCopertura)));
-  const trattoFinale = Math.min(840,Math.max(560,innerHeight*.94));
+  const trattoFinale = Math.min(1400,Math.max(950,innerHeight*1.5));
   const preTargetY = Math.max(0,Math.min(maxY,targetY-verso*trattoFinale));
   jumpTransition.classList.toggle("verso-alto",verso < 0);
   /* La velatura comincia mentre questo stesso scroll e' ancora in corsa:
      il rallentamento finale resta nascosto e non sembra una fermata. */
-  const durataIngresso = 600;
+  const durataIngresso = 700;
   scrollSaltoTimer = setTimeout(()=>{
     scrollSaltoTimer = null;
     jumpTransition.classList.add("is-visible");
-  },Math.round(durataIngresso*.57));
+  },Math.round(durataIngresso*.58));
   animaTrattoScroll(startY,ingressoY,durataIngresso,()=>{
     jumpTransition.classList.add("is-visible");
     scrollAnimId = -1;
@@ -2952,15 +3014,19 @@ function scrollaProtetto(el){
           const metaAggiornata = Math.max(0,Math.min(maxAggiornato,
             el.getBoundingClientRect().top+scrollY));
           const partenzaFinale = scrollY;
-          /* All'uscita parte veloce e rallenta soltanto vicino alla meta:
-             quando la velatura sparisce lo scroll e' quindi gia' evidente. */
-          jumpTransition.classList.add("is-exiting");
-          animaTrattoScroll(partenzaFinale,metaAggiornata,650,
-            terminaScrollProtetto,easeOutQuad);
+          /* Lo scroll reale riparte sotto la velatura. La dissolvenza viene
+             ritardata finche' sia le sagome sia la pagina non hanno gia'
+             rallentato: il cambio di velocita' resta quindi invisibile. */
+          scrollSaltoTimer = setTimeout(()=>{
+            scrollSaltoTimer = null;
+            jumpTransition.classList.add("is-exiting");
+          },140);
+          animaTrattoScroll(partenzaFinale,metaAggiornata,1150,
+            terminaScrollProtetto,easeOutSine);
         });
       });
     },45);
-  });
+  },easeInQuad);
 }
 
 /* Il ritorno all'inizio compare solo dopo che la pagina e' stata
@@ -3371,7 +3437,10 @@ let aggiornaParallasse = ()=>{};
   const pianetiEl = [...document.querySelectorAll("#pianeti .pianeta")];
 
   aggiornaParallasse = ()=>{
-    const y = scrollY;
+    /* Il rimbalzo elastico dei WebView iOS puo' rendere scrollY negativo.
+       Lasciarlo entrare nel modulo sposterebbe i livelli verso il basso e
+       scoprirebbe temporaneamente il bordo superiore del campo stellare. */
+    const y = Math.max(0,scrollY);
     stelleStrati.forEach((s,i)=>{
       const depth = parseFloat(s.dataset.depth);
       const t = (y*depth) % ALTEZZA_PIASTRELLA_STELLE;
