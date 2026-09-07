@@ -54,6 +54,7 @@ body{
   font-family:var(--body);font-size:16px;line-height:1.5;
   -webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;
 }
+html.scroll-protetto,html.scroll-protetto body{touch-action:none}
 
 /* ============================ campo stellare ============================ */
 #sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
@@ -1273,6 +1274,18 @@ body{
   .comic-collection-note{margin-top:8px;padding:7px 8px}
   .comic-collection-note span{font-size:8.5px}
   .comic-collection-note strong{font-size:10.5px}
+  /* Safari e i browser interni iOS pagano molto la combinazione di molti
+     backdrop-filter e grandi forme sfocate fisse. Il fondale base contiene
+     gia' le stesse velature cromatiche: su WebKit mobile evitiamo quindi i
+     livelli duplicati e lasciamo i pannelli con la medesima trasparenza. */
+  @supports (-webkit-touch-callout:none){
+    .head,.top-panel,.controls::before,.back-top{
+      -webkit-backdrop-filter:none!important;backdrop-filter:none!important
+    }
+    #sky .neb,#sky .banda,#sky .polvere,#sky .buio{display:none}
+    .jump-transition::before,.jump-transition::after{filter:none}
+    .jump-transition.is-visible::after{opacity:.78}
+  }
 }
 @media (max-width:560px){
   .wrap{padding:0 15px 90px}
@@ -2486,6 +2499,7 @@ const SELETTORE_SCHEDE_MOBILI =
 const SCALA_SCHEDA_CHIUSA = .6;
 const SCALA_SCHEDA_INGRANDITA = SCALA_SCHEDA_CHIUSA * 1.6;
 OPERE.forEach((o,i)=>o.id = slug(o.ti)+"-"+i);
+const OPERE_PER_ID = new Map(OPERE.map(o=>[o.id,o]));
 
 function slug(s){return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
   .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,42)}
@@ -2532,6 +2546,7 @@ const jumpTransition = document.getElementById("jumpTransition");
 let sezioniTimeline = [], segmentiRibbon = [];
 let metricheSezioni = [], metricheTimelineAttese = false;
 let osservatoreDimensioni = null;
+let osservatoreCopertine = null;
 let altezzaBarra = 0;
 
 function aggiornaPulsantiFiltro(){
@@ -2539,7 +2554,45 @@ function aggiornaPulsantiFiltro(){
     btn.setAttribute("aria-pressed", String(state.tipi.has(btn.dataset.filter))));
 }
 
+/* Il lazy-loading nativo di Safari tende a richiedere molte copertine della
+   timeline gia' all'avvio. Conservare l'URL in data-src ci permette invece
+   di caricare soltanto le immagini vicine allo schermo. */
+function caricaCopertina(im){
+  if(!im?.dataset.src) return;
+  im.src = im.dataset.src;
+  delete im.dataset.src;
+  osservatoreCopertine?.unobserve(im);
+}
+function preparaCaricamentoCopertine(){
+  osservatoreCopertine?.disconnect();
+  const immagini = [...list.querySelectorAll("img[data-shot][data-src]")];
+  if(!immagini.length) return;
+  if(!("IntersectionObserver" in window)){
+    immagini.forEach(caricaCopertina);
+    return;
+  }
+  osservatoreCopertine = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      const visibileOra = entry.boundingClientRect.bottom >= -80
+        && entry.boundingClientRect.top <= innerHeight+80;
+      entry.target.setAttribute("fetchpriority",visibileOra ? "high" : "low");
+      caricaCopertina(entry.target);
+    });
+  },{rootMargin:vistaMobile.matches ? "650px 0px" : "1400px 0px",threshold:.01});
+  immagini.forEach(im=>osservatoreCopertine.observe(im));
+}
+function precaricaCopertine(root,limite=8){
+  if(!root) return;
+  [...root.querySelectorAll("img[data-shot][data-src]")]
+    .slice(0,limite).forEach((im,i)=>{
+      im.setAttribute("fetchpriority",i < 4 ? "high" : "low");
+      caricaCopertina(im);
+    });
+}
+
 function render(){
+  osservatoreCopertine?.disconnect();
   aggiornaPulsantiFiltro();
   const gs = gruppi();
   const tot = gs.reduce((n,g)=>n+g.items.length,0);
@@ -2563,6 +2616,7 @@ function render(){
     sezioniTimeline = [];
     segmentiRibbon = [];
     metricheSezioni = [];
+    osservatoreCopertine = null;
     list.innerHTML = state.tipi.size
       ? `<div class="empty"><b>Nessun risultato</b>
           Prova con una parola più corta o riattiva una tipologia.</div>`
@@ -2595,6 +2649,7 @@ function render(){
   list.querySelectorAll("img[data-shot]").forEach(im=>{
     im.onerror = ()=>{im.parentElement.classList.add("vuoto"); im.remove();};
   });
+  preparaCaricamentoCopertine();
   aggiornaIngombriSchede();
   spia(gs);
 }
@@ -2614,7 +2669,7 @@ function lista(items){
   }).join("");
 }
 
-function pannelloCloneWars(o, aperto){
+function contenutoPannelloCloneWars(){
   const rigaFilm = `<li class="episode-row is-film">
     <span class="episode-order">FILM</span>
     <span class="episode-code">2008</span>
@@ -2628,8 +2683,7 @@ function pannelloCloneWars(o, aperto){
     </li>`;
     return (i === 2 ? rigaFilm : "") + rigaEpisodio;
   }).join("");
-  return `<div class="episode-guide" id="guida-${o.id}" aria-hidden="${String(!aperto)}">
-    <div class="episode-guide-clip">
+  return `<div class="episode-guide-clip">
       <section class="episode-guide-card" aria-label="Ordine cronologico degli episodi di The Clone Wars">
         <header class="episode-guide-head">
           <strong>Ordine cronologico degli episodi</strong>
@@ -2638,17 +2692,21 @@ function pannelloCloneWars(o, aperto){
           <ol class="episode-list">${righe}</ol>
         </div>
       </section>
-    </div>
+    </div>`;
+}
+
+function pannelloCloneWars(o, aperto){
+  return `<div class="episode-guide" id="guida-${o.id}" aria-hidden="${String(!aperto)}">
+    ${aperto?contenutoPannelloCloneWars():""}
   </div>`;
 }
 
-function pannelloFumetto(o, aperto){
+function contenutoPannelloFumetto(o){
   const contenuti = CONTENUTI_FUMETTI.get(o.ti) || "";
   const raccolta = raccoltaOneShot(o.ti);
   const numeri = contenuti.split(/\s+\+\s+/).filter(Boolean);
   const righe = numeri.map(numero=>`<li>${esc(numero)}</li>`).join("");
-  return `<div class="comic-guide" id="contenuti-${o.id}" aria-hidden="${String(!aperto)}">
-    <div class="comic-guide-clip">
+  return `<div class="comic-guide-clip">
       <section class="comic-guide-card" aria-label="Numeri contenuti in ${esc(o.ti)}">
         <strong class="comic-guide-title">Numeri contenuti</strong>
         <ul class="comic-contents-list">${righe}</ul>
@@ -2657,7 +2715,12 @@ function pannelloFumetto(o, aperto){
           <strong>${esc(raccolta)}</strong>
         </p>`:""}
       </section>
-    </div>
+    </div>`;
+}
+
+function pannelloFumetto(o, aperto){
+  return `<div class="comic-guide" id="contenuti-${o.id}" aria-hidden="${String(!aperto)}">
+    ${aperto?contenutoPannelloFumetto(o):""}
   </div>`;
 }
 
@@ -2678,7 +2741,7 @@ function voce(o, lato){
     : `${fumettoAperto?"Chiudi":"Apri"} i numeri contenuti in ${o.ti}`;
   const meta = [tipoLab, o.rl].concat(o.lg?["Legends"]:[]);
   const mostraImg = COPERTINE_ATTIVE && o.img;
-  const src = mostraImg ? `<img data-shot src="immagini/${esc(o.img)}?v=${CACHE_BUST}" alt="" draggable="false" loading="lazy" decoding="async" fetchpriority="low">` : "";
+  const src = mostraImg ? `<img data-shot data-src="immagini/${esc(o.img)}?v=${CACHE_BUST}" alt="" draggable="false" loading="eager" decoding="async">` : "";
   return `<li class="item ${lato} ${o.lg?"legends":""} ${schedeIngrandite.has(o.id)?"mobile-ingrandita":""} ${haGuidaEpisodi?"has-episode-guide":""} ${guidaAperta?"episode-guide-open":""} ${haGuidaFumetto?"has-comic-guide":""} ${fumettoAperto?"comic-guide-open":""}" id="opera-${o.id}" data-opera-tipo="${esc(tipo)}">
     <${tagTesta} class="head"${interattiva?` type="button" aria-expanded="${String(guidaAperta || fumettoAperto)}" aria-controls="${idPannello}" aria-label="${esc(ariaLabel)}"`:""}>
       <figure class="shot${mostraImg?"":" vuoto"}" data-tipo="${esc(tipoLab)}">${src}</figure>
@@ -2721,7 +2784,37 @@ function aggiornaIngombroScheda(scheda){
 }
 
 function aggiornaIngombriSchede(){
-  document.querySelectorAll(SELETTORE_SCHEDE_MOBILI).forEach(aggiornaIngombroScheda);
+  const schede = [...document.querySelectorAll(SELETTORE_SCHEDE_MOBILI)];
+  if(!vistaMobile.matches){
+    schede.forEach(scheda=>{
+      scheda.style.removeProperty("height");
+      scheda.style.removeProperty("--scala-scheda-mobile");
+      scheda.style.removeProperty("--altezza-testa-mobile");
+    });
+    return;
+  }
+
+  /* Prima tutte le scritture, poi tutte le letture e infine le altezze:
+     evita un ricalcolo completo del layout per ognuna delle centinaia di
+     schede presenti nella pagina. */
+  const preparate = schede.map(scheda=>{
+    const scala = scheda.classList.contains("mobile-ingrandita")
+      ? SCALA_SCHEDA_INGRANDITA : SCALA_SCHEDA_CHIUSA;
+    scheda.style.setProperty("--scala-scheda-mobile",scala);
+    return {scheda,scala,head:scheda.querySelector(".head"),
+      pannello:scheda.querySelector(":scope > .comic-guide .comic-guide-clip")};
+  }).filter(x=>x.head);
+
+  const misure = preparate.map(x=>({
+    ...x,
+    altezzaTesta:Math.ceil(x.head.offsetHeight*x.scala),
+    altezzaPannello:x.scheda.classList.contains("comic-guide-open") && x.pannello
+      ? x.pannello.scrollHeight : 0
+  }));
+  misure.forEach(({scheda,altezzaTesta,altezzaPannello})=>{
+    scheda.style.setProperty("--altezza-testa-mobile",altezzaTesta+"px");
+    scheda.style.height = Math.ceil(altezzaTesta+altezzaPannello)+"px";
+  });
 }
 
 /* Le coordinate delle otto epoche cambiano soltanto quando cambia il
@@ -2958,12 +3051,20 @@ function scrollaProtetto(el){
   const distanza = targetY - startY;
   if(Math.abs(distanza) < 2) return;
 
-  const impedisci = e => e.preventDefault();
+  /* Le poche copertine iniziali della destinazione vengono richieste subito,
+     mentre l'animazione e' ancora in corso, invece che tutte insieme dopo
+     l'arrivo del salto. */
+  precaricaCopertine(el,vistaMobile.matches ? 8 : 5);
+
+  const impedisci = e=>e.preventDefault();
+  const bloccoTouchCss = vistaMobile.matches && CSS.supports("touch-action","none");
   addEventListener("wheel", impedisci, {passive:false});
-  addEventListener("touchmove", impedisci, {passive:false});
+  if(bloccoTouchCss) document.documentElement.classList.add("scroll-protetto");
+  else addEventListener("touchmove", impedisci, {passive:false});
   scrollBlocco = () => {
     removeEventListener("wheel", impedisci, {passive:false});
-    removeEventListener("touchmove", impedisci, {passive:false});
+    if(bloccoTouchCss) document.documentElement.classList.remove("scroll-protetto");
+    else removeEventListener("touchmove", impedisci, {passive:false});
     scrollBlocco = null;
   };
 
@@ -3118,6 +3219,12 @@ function impostaGuidaEpisodi(scheda, apri){
   const id = scheda.id.replace(/^opera-/, "");
   const testa = scheda.querySelector(":scope > .head");
   const pannello = scheda.querySelector(":scope > .episode-guide");
+  if(apri && !pannello.firstElementChild){
+    pannello.innerHTML = contenutoPannelloCloneWars();
+    /* Registra lo stato chiuso con il contenuto appena creato, cosi'
+       l'apertura conserva la stessa animazione usata finora. */
+    pannello.getBoundingClientRect();
+  }
   scheda.classList.toggle("episode-guide-open",apri);
   testa.setAttribute("aria-expanded",String(apri));
   testa.setAttribute("aria-label",`${apri?"Chiudi":"Apri"} l'ordine cronologico degli episodi di The Clone Wars`);
@@ -3140,6 +3247,11 @@ function impostaGuidaFumetto(scheda, apri){
   const testa = scheda.querySelector(":scope > .head");
   const pannello = scheda.querySelector(":scope > .comic-guide");
   const titolo = scheda.querySelector(":scope > .head .title")?.textContent.trim() || "il fumetto";
+  if(apri && !pannello.firstElementChild){
+    const opera = OPERE_PER_ID.get(id);
+    if(opera) pannello.innerHTML = contenutoPannelloFumetto(opera);
+    pannello.getBoundingClientRect();
+  }
   scheda.classList.toggle("comic-guide-open",apri);
   testa.setAttribute("aria-expanded",String(apri));
   testa.setAttribute("aria-label",`${apri?"Chiudi":"Apri"} i numeri contenuti in ${titolo}`);
@@ -3435,8 +3547,24 @@ let aggiornaParallasse = ()=>{};
   const stelleStrati = [...document.querySelectorAll("#stelle .layer")];
   const ultimePosizioniStelle = stelleStrati.map(()=>"");
   const pianetiEl = [...document.querySelectorAll("#pianeti .pianeta")];
+  const intervalloMobile = vistaMobile.matches ? 32 : 0;
+  let ultimoAggiornamento = 0, timerParallasse = null;
 
-  aggiornaParallasse = ()=>{
+  aggiornaParallasse = (forza=false)=>{
+    const ora = Date.now();
+    const attesa = intervalloMobile-(ora-ultimoAggiornamento);
+    if(!forza && intervalloMobile && attesa > 0){
+      if(!timerParallasse) timerParallasse = setTimeout(()=>{
+        timerParallasse = null;
+        aggiornaParallasse(true);
+      },attesa);
+      return;
+    }
+    if(timerParallasse){
+      clearTimeout(timerParallasse);
+      timerParallasse = null;
+    }
+    ultimoAggiornamento = ora;
     /* Il rimbalzo elastico dei WebView iOS puo' rendere scrollY negativo.
        Lasciarlo entrare nel modulo sposterebbe i livelli verso il basso e
        scoprirebbe temporaneamente il bordo superiore del campo stellare. */
