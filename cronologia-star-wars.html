@@ -31,16 +31,33 @@ img{
   user-select:none;-webkit-user-select:none;
   -webkit-user-drag:none;-webkit-touch-callout:none
 }
+/* Fondale di sicurezza per i browser iOS incorporati. Durante il rimbalzo
+   verticale WebKit puo' sospendere per un istante i livelli fixed: queste
+   stelle leggere restano dipinte sul documento e impediscono che affiori
+   una schermata nera uniforme. Normalmente sono coperte da #sky. */
 html{-webkit-text-size-adjust:100%;color-scheme:dark;overscroll-behavior-y:none;
-  background:radial-gradient(120% 90% at 50% 0%,#080D1A 0%,#04060E 55%,#020409 100%) fixed}
+  min-height:100%;background-color:#03050B;
+  background-image:
+    radial-gradient(circle at 23px 31px,rgba(238,244,255,.34) 0 .65px,transparent .95px),
+    radial-gradient(circle at 91px 137px,rgba(188,211,246,.24) 0 .7px,transparent 1px),
+    radial-gradient(circle at 211px 83px,rgba(255,236,205,.18) 0 .75px,transparent 1.1px);
+  background-size:173px 211px,257px 331px,389px 487px;
+  background-position:0 0,37px 59px,83px 127px}
 body{
-  margin:0;background:var(--bg);color:var(--ink);
+  margin:0;min-height:100%;background-color:var(--bg);
+  background-image:
+    radial-gradient(circle at 23px 31px,rgba(238,244,255,.34) 0 .65px,transparent .95px),
+    radial-gradient(circle at 91px 137px,rgba(188,211,246,.24) 0 .7px,transparent 1px),
+    radial-gradient(circle at 211px 83px,rgba(255,236,205,.18) 0 .75px,transparent 1.1px);
+  background-size:173px 211px,257px 331px,389px 487px;
+  background-position:0 0,37px 59px,83px 127px;color:var(--ink);
   font-family:var(--body);font-size:16px;line-height:1.5;
   -webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;
 }
 
 /* ============================ campo stellare ============================ */
 #sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  contain:strict;isolation:isolate;transform:translateZ(0);backface-visibility:hidden;
   background:
     radial-gradient(ellipse 85% 58% at 10% 7%,rgba(38,67,112,.25),transparent 66%),
     radial-gradient(ellipse 72% 52% at 90% 88%,rgba(67,39,91,.18),transparent 68%),
@@ -59,9 +76,14 @@ body{
    Ogni strato ha 820px di margine sopra e sotto: puo' muoversi sulla GPU
    di un'intera piastrella e poi ripartire dalla stessa immagine, senza
    ridisegnare lo sfondo o lasciare bordi scoperti. */
-#stelle{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-#stelle .layer{position:absolute;top:-820px;left:0;width:100%;
-  height:calc(100% + 1640px);background-repeat:repeat;
+#stelle{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  contain:strict;backface-visibility:hidden}
+/* Il movimento e' sempre verso l'alto e non richiede un'intera piastrella
+   di margine anche sotto il livello: dimezzare il margine invisibile riduce
+   nettamente la memoria delle tre superfici composite, senza cambiare
+   texture, velocita' o parallasse. */
+#stelle .layer{position:absolute;top:0;left:0;width:100%;
+  height:calc(100% + 820px);background-repeat:repeat;
   will-change:transform;transform:translate3d(0,0,0)}
 /* i pianeti restano distribuiti su tutta la pagina (devono comparire
    ognuno vicino alla propria epoca), ma SENZA un contenitore enorme con
@@ -402,7 +424,7 @@ body{
   transform:translateX(-.5px);
   background:linear-gradient(to bottom,transparent,var(--line-strong) 5%,
              var(--line-strong) 95%,transparent)}
-.item{position:relative;width:calc(50% - 46px)}
+.item{position:relative;width:calc(50% - 46px);contain:layout style}
 .item.dx{margin-left:auto}
 /* raccordo orizzontale verso la linea centrale */
 .item::after{content:"";position:absolute;top:36px;width:46px;height:1px;
@@ -836,6 +858,11 @@ body{
 
 /* sotto i 700px la linea si sposta a sinistra: una colonna sola */
 @media (max-width:700px){
+  /* 100lvh usa l'altezza massima stabile del webview: l'apertura della
+     barra di Telegram non lascia scoperto il bordo del campo stellare. */
+  @supports (height:100lvh){
+    #sky,#stelle{height:100lvh;bottom:auto}
+  }
   /* Telegram su iOS compone gli elementi fixed sotto la propria barra.
      Estendere verso l'alto lo sfondo dello stesso nastro sticky mantiene
      invece la copertura nel livello che Telegram mostra correttamente. */
@@ -2369,8 +2396,9 @@ const mobileFiltersToggle = document.getElementById("mobileFiltersToggle");
 const mobileSearchClose = document.getElementById("mobileSearchClose");
 const mobileFiltersClose = document.getElementById("mobileFiltersClose");
 const backTop = document.getElementById("backTop");
-let osservatore = null;
 let sezioniTimeline = [], segmentiRibbon = [];
+let metricheSezioni = [], metricheTimelineAttese = false;
+let osservatoreDimensioni = null;
 let altezzaBarra = 0;
 
 function aggiornaPulsantiFiltro(){
@@ -2398,9 +2426,10 @@ function render(){
     </button>`).join("");
 
   if(!tot){
-    if(osservatore) osservatore.disconnect();
+    if(osservatoreDimensioni) osservatoreDimensioni.disconnect();
     sezioniTimeline = [];
     segmentiRibbon = [];
+    metricheSezioni = [];
     list.innerHTML = state.tipi.size
       ? `<div class="empty"><b>Nessun risultato</b>
           Prova con una parola più corta o riattiva una tipologia.</div>`
@@ -2562,11 +2591,36 @@ function aggiornaIngombriSchede(){
   document.querySelectorAll(SELETTORE_SCHEDE_MOBILI).forEach(aggiornaIngombroScheda);
 }
 
+/* Le coordinate delle otto epoche cambiano soltanto quando cambia il
+   layout (filtri, ricerca, apertura di una scheda o ridimensionamento),
+   non durante il normale scroll. Tenerle in memoria evita letture di
+   layout sincrone a ogni fotogramma, particolarmente costose nei webview. */
+function misuraSezioniTimeline(){
+  const paginaY = scrollY;
+  metricheSezioni = sezioniTimeline.map(sezione=>{
+    const r = sezione.getBoundingClientRect();
+    return {top:r.top+paginaY,height:r.height};
+  });
+}
+function programmaMetricheTimeline(){
+  if(metricheTimelineAttese) return;
+  metricheTimelineAttese = true;
+  requestAnimationFrame(()=>{
+    misuraSezioniTimeline();
+    aggiornaProgressoEre();
+    metricheTimelineAttese = false;
+  });
+}
 
 function spia(gs){
-  if(osservatore) osservatore.disconnect();
+  if(osservatoreDimensioni) osservatoreDimensioni.disconnect();
   sezioniTimeline = [...list.querySelectorAll(".group")];
   segmentiRibbon = [...ribbon.querySelectorAll(".seg")];
+  misuraSezioniTimeline();
+  if("ResizeObserver" in window){
+    if(!osservatoreDimensioni) osservatoreDimensioni = new ResizeObserver(programmaMetricheTimeline);
+    sezioniTimeline.forEach(sezione=>osservatoreDimensioni.observe(sezione));
+  }
   const cima = ribbonNav.offsetHeight;
   const barra = controls.offsetHeight;
   altezzaBarra = RIBBON_GAP+cima+barra;
@@ -2587,20 +2641,22 @@ function aggiornaProgressoEre(){
   const sezioni = sezioniTimeline;
   const segmenti = segmentiRibbon;
   if(!sezioni.length || !segmenti.length) return;
+  if(metricheSezioni.length !== sezioni.length) misuraSezioniTimeline();
 
   const linea = lineaLetturaTimeline();
+  const punto = scrollY + linea;
   /* Rimane attiva l'ultima sezione il cui inizio e' stato superato.
      Cosi' gli spazi tra due gruppi non fanno saltare per un fotogramma
      l'indicatore all'ultima epoca della timeline. */
   let corrente = 0;
-  for(let i=0;i<sezioni.length;i++){
-    if(sezioni[i].getBoundingClientRect().top <= linea) corrente = i;
+  for(let i=0;i<metricheSezioni.length;i++){
+    if(metricheSezioni[i].top <= punto) corrente = i;
     else break;
   }
 
-  const rCorrente = sezioni[corrente].getBoundingClientRect();
+  const rCorrente = metricheSezioni[corrente];
   const avanzamento = Math.min(1,Math.max(0,
-    (linea-rCorrente.top) / Math.max(1,rCorrente.height)));
+    (punto-rCorrente.top) / Math.max(1,rCorrente.height)));
 
   segmenti.forEach((segmento,i)=>{
     const p = i < corrente ? 1 : i === corrente ? avanzamento : 0;
@@ -2755,9 +2811,13 @@ function scrollaProtetto(el){
 
 /* Il ritorno all'inizio compare solo dopo che la pagina e' stata
    percorsa abbastanza da renderlo davvero utile. */
+let backTopVisibile = null;
 function aggiornaBackTop(){
   const soglia = Math.max(520, innerHeight * .75);
-  backTop.classList.toggle("visibile", scrollY > soglia);
+  const visibile = scrollY > soglia;
+  if(visibile === backTopVisibile) return;
+  backTopVisibile = visibile;
+  backTop.classList.toggle("visibile",visibile);
 }
 aggiornaBackTop();
 
@@ -2927,6 +2987,7 @@ window.addEventListener("resize", ()=>{
       + controls.offsetHeight;
     document.documentElement.style.setProperty("--bar-h",altezzaBarra+"px");
     aggiornaIngombriSchede();
+    programmaMetricheTimeline();
     ultimaEpocaAttiva = "";
     programmaProgressoEre();
   });
@@ -3152,14 +3213,18 @@ let aggiornaParallasse = ()=>{};
   const CAP_PIANETI = 2600;
   const ALTEZZA_PIASTRELLA_STELLE = 820;
   const stelleStrati = [...document.querySelectorAll("#stelle .layer")];
+  const ultimePosizioniStelle = stelleStrati.map(()=>"");
   const pianetiEl = [...document.querySelectorAll("#pianeti .pianeta")];
 
   aggiornaParallasse = ()=>{
     const y = scrollY;
-    stelleStrati.forEach(s=>{
+    stelleStrati.forEach((s,i)=>{
       const depth = parseFloat(s.dataset.depth);
       const t = (y*depth) % ALTEZZA_PIASTRELLA_STELLE;
-      s.style.transform = `translate3d(0,${(-t).toFixed(1)}px,0)`;
+      const posizione = (-t).toFixed(1);
+      if(posizione === ultimePosizioniStelle[i]) return;
+      ultimePosizioniStelle[i] = posizione;
+      s.style.transform = `translate3d(0,${posizione}px,0)`;
     });
     pianetiEl.forEach(s=>{
       const depth = parseFloat(s.dataset.depth);
