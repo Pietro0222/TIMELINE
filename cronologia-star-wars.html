@@ -625,6 +625,57 @@ body{
 .item[data-opera-tipo="audiolibro"] .meta span:first-child{
   font-family:var(--body);font-weight:500;font-style:italic;letter-spacing:.055em
 }
+
+/* Guida cronologica di The Clone Wars: la scheda del film apre un pannello
+   dedicato senza cambiare la gerarchia o il comportamento delle altre opere. */
+.item.has-episode-guide .head{position:relative;cursor:pointer;font:inherit;
+  appearance:none;-webkit-appearance:none;
+  transition:border-color .22s ease,box-shadow .22s ease,transform .18s ease}
+.item.has-episode-guide .head:active{transform:scale(.996)}
+.item.has-episode-guide .head:focus-visible{outline:2px solid var(--c);outline-offset:4px}
+.episode-expand{position:absolute;right:14px;bottom:14px;z-index:3;
+  width:30px;height:30px;border:1px solid color-mix(in srgb,var(--c) 72%,transparent);
+  border-radius:8px;background:rgba(3,5,11,.9);color:var(--c);
+  box-shadow:0 0 13px color-mix(in srgb,var(--c) 20%,transparent);
+  transition:border-color .22s ease,box-shadow .22s ease,transform .28s ease}
+.episode-expand::before,.episode-expand::after{content:"";position:absolute;
+  left:50%;top:50%;width:11px;height:2px;border-radius:2px;background:currentColor;
+  transform:translate(-50%,-50%);transition:transform .28s ease,opacity .2s ease}
+.episode-expand::after{transform:translate(-50%,-50%) rotate(90deg)}
+.item.episode-guide-open .episode-expand{border-color:var(--c);
+  box-shadow:0 0 18px color-mix(in srgb,var(--c) 34%,transparent);transform:rotate(180deg)}
+.item.episode-guide-open .episode-expand::after{opacity:0;
+  transform:translate(-50%,-50%) rotate(90deg) scaleY(0)}
+.episode-guide{display:grid;grid-template-rows:0fr;opacity:0;
+  transform:translateY(-9px);pointer-events:none;
+  transition:grid-template-rows .42s cubic-bezier(.22,.8,.25,1),
+    opacity .24s ease,transform .38s cubic-bezier(.22,.8,.25,1)}
+.item.episode-guide-open .episode-guide{grid-template-rows:1fr;opacity:1;
+  transform:translateY(0);pointer-events:auto}
+.episode-guide-clip{min-height:0;overflow:hidden}
+.episode-guide-card{margin-top:10px;border:1px solid color-mix(in srgb,var(--c) 38%,transparent);
+  border-radius:var(--r);overflow:hidden;background:rgba(7,12,21,.96);
+  box-shadow:0 16px 34px rgba(0,0,0,.3),0 0 26px color-mix(in srgb,var(--c) 8%,transparent)}
+.episode-guide-head{padding:16px 18px 13px;border-bottom:1px solid var(--line);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--c) 12%,rgba(9,14,24,.96)),rgba(9,14,24,.96))}
+.episode-guide-head strong{display:block;font-family:var(--display);font-size:20px;
+  line-height:1.1;color:var(--ink)}
+.episode-guide-scroll{max-height:min(64vh,610px);overflow-y:auto;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-color:var(--c) transparent}
+.episode-list{list-style:none;margin:0;padding:5px 10px 10px}
+.episode-row{display:grid;grid-template-columns:38px 62px minmax(0,1fr);align-items:center;
+  gap:9px;min-height:39px;padding:7px 8px;border-bottom:1px solid rgba(148,178,206,.09)}
+.episode-row:last-child{border-bottom:0}
+.episode-order{font-family:var(--display);font-size:11px;color:var(--ink-faint);
+  text-align:right;font-variant-numeric:tabular-nums}
+.episode-code{justify-self:start;padding:2px 6px;border:1px solid color-mix(in srgb,var(--c) 34%,transparent);
+  border-radius:4px;color:var(--c);font-family:var(--display);font-size:11px;
+  font-weight:700;letter-spacing:.045em;white-space:nowrap}
+.episode-name{min-width:0;font-size:13.5px;font-weight:500;line-height:1.25;color:#CED9E6}
+.episode-row.is-film{margin:4px 0;border:1px solid color-mix(in srgb,var(--c) 46%,transparent);
+  border-radius:7px;background:color-mix(in srgb,var(--c) 10%,transparent)}
+.episode-row.is-film .episode-order,.episode-row.is-film .episode-name{color:var(--ink);font-weight:700}
+.episode-row.is-film .episode-code{background:var(--c);border-color:var(--c);color:#06101E}
 .mobile-expand{display:none}
 .back-top{
   position:fixed;z-index:45;right:24px;bottom:24px;width:48px;height:48px;
@@ -892,7 +943,8 @@ body{
   .item:is(.serie,.corto) .head{gap:8px}
   .item.serie .title{font-size:24px;line-height:1.1;margin:1px 0 4px}
   .item.corto .title{font-size:21.75px;line-height:1.1;margin:1px 0 3px}
-  .item:is(.serie,.corto) .stagioni{font-size:18px}
+  .item.serie .stagioni{font-size:14.4px}
+  .item.corto .stagioni{font-size:18px}
   .item.serie .yr{font-size:12.6px}
   .item.corto .yr{font-size:12.24px}
   .item.serie .meta{font-size:11.76px}
@@ -950,6 +1002,18 @@ body{
     box-shadow:0 0 10px color-mix(in srgb,var(--c) 26%,transparent)
   }
   .item.mobile-ingrandita .mobile-expand::before{content:"−"}
+  .item.has-episode-guide .head{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .episode-expand{right:10px;bottom:10px;width:25px;height:25px;border-radius:6px}
+  .episode-expand::before,.episode-expand::after{width:9px;height:1.5px}
+  .episode-guide-card{margin-top:8px}
+  .episode-guide-head{padding:13px 14px 11px}
+  .episode-guide-head strong{font-size:18px}
+  .episode-guide-scroll{max-height:58svh}
+  .episode-list{padding:4px 7px 8px}
+  .episode-row{grid-template-columns:30px 54px minmax(0,1fr);gap:7px;
+    min-height:37px;padding:7px 5px}
+  .episode-order,.episode-code{font-size:10px}
+  .episode-name{font-size:13px}
 }
 @media (max-width:560px){
   .wrap{padding:0 15px 90px}
@@ -1219,7 +1283,7 @@ const OPERE = [
    n:"One-shot della serie antologica Storie dall'Iperspazio."},
   {ti:"L'Età della Repubblica – Eroi: Anakin Skywalker", y:-22, yl:"22 BBY", r:2019, rl:"2019", t:"fumetto", e:"caduta", img:"eta-repubblica-eroi.jpg",
    n:"Antologia di quattro one-shot su Qui-Gon Jinn, Obi-Wan Kenobi, Anakin Skywalker e Padmé Amidala nell'epoca della Repubblica."},
-  {ti:"The Clone Wars – Il film", y:-22, yl:"22 BBY", r:2008, rl:"2008", t:"animazione", tipoLabel:"Film", e:"caduta", img:"clone-wars-film.jpg",
+  {ti:"The Clone Wars – Il film", y:-22, yl:"22 BBY", r:2008, rl:"2008", t:"animazione", tipoLabel:"Film", e:"caduta", img:"clone-wars-film.jpg", guidaEpisodi:"clone-wars",
    n:"Pilota cinematografico della serie animata: presenta Ahsoka Tano come padawan di Anakin."},
   {ti:"The Clone Wars", y:-22, yl:"22 BBY", r:2008, rl:"2008 – 2020", t:"animazione", stagioni:"Stagioni 1 e 2", e:"caduta", img:"the-clone-wars.jpg",
    n:"Le prime due stagioni delle Guerre dei Cloni, riunite perché consecutive nella cronologia."},
@@ -1790,6 +1854,144 @@ const COPERTINE_ATTIVE = true;
    quando vengono sostituite delle immagini mantenendo lo stesso nome. */
 const CACHE_BUST = "20260907-1";
 
+/* Ordine sequenziale ufficiale Lucasfilm. Il codice compatto indica
+   stagione ed episodio nella numerazione di pubblicazione (es. 216 = S2 E16). */
+const CLONE_WARS_EPISODI = [
+  ["216","Gatto e topo"],
+  ["116","Il nemico invisibile"],
+  ["301","L'unione fa la forza"],
+  ["303","Missione umanitaria"],
+  ["101","Il duello"],
+  ["102","Missione di salvataggio"],
+  ["103","L'ombra della Malevolence"],
+  ["104","Attacco alla Malevolence"],
+  ["105","Reclute"],
+  ["106","La caduta di un droide"],
+  ["107","La stazione spia"],
+  ["108","Jar Jar Jedi"],
+  ["109","Il velo dell'oscurità"],
+  ["110","Il covo di Grievous"],
+  ["111","La cattura del conte Dooku"],
+  ["112","Il riscatto"],
+  ["113","Atterraggio di fortuna"],
+  ["114","I difensori della pace"],
+  ["115","Guerra e pace"],
+  ["117","Il virus Blue Shadow"],
+  ["118","Il mistero delle mille lune"],
+  ["119","Tempesta su Ryloth"],
+  ["120","Gli innocenti"],
+  ["121","Quell'ultimo ponte"],
+  ["201","La camera dei segreti"],
+  ["202","Il cristallo della memoria"],
+  ["203","I figli della Forza"],
+  ["217","Sette contro tutti"],
+  ["218","Lo Zillo Beast"],
+  ["219","Lo Zillo Beast colpisce ancora"],
+  ["204","La spia"],
+  ["205","Attacco a Geonosis"],
+  ["206","La fabbrica di droidi"],
+  ["207","La mente alveare"],
+  ["208","Gli invasori della mente"],
+  ["209","Attacco a sorpresa"],
+  ["210","Il disertore"],
+  ["211","Alla ricerca della spada laser"],
+  ["212","La ronda della morte"],
+  ["213","L'onda del passato"],
+  ["214","Le due verità"],
+  ["220","I cadetti"],
+  ["221","Il piccolo grande R2"],
+  ["222","Inseguimento mortale"],
+  ["305","Corruzione"],
+  ["306","L'accademia"],
+  ["307","La mano della vendetta"],
+  ["302","Clone 99"],
+  ["304","Sfera di influenza"],
+  ["308","Piani diabolici"],
+  ["122","Ostaggi"],
+  ["309","Caccia a Ziro"],
+  ["310","Proposte di pace"],
+  ["311","La ricerca della pace"],
+  ["215","La guerra del senato"],
+  ["312","Le sorelle della notte"],
+  ["313","La vendetta"],
+  ["314","Lealtà e tradimento"],
+  ["315","I guardiani della Forza"],
+  ["316","La luce spezzata"],
+  ["317","Lo specchio del futuro"],
+  ["318","La cittadella"],
+  ["319","Contrattacco"],
+  ["320","Tentativo estremo"],
+  ["321","La Padawan scomparsa"],
+  ["322","Lottare per sopravvivere"],
+  ["401","Guerra negli abissi"],
+  ["402","L'attacco dei gungan"],
+  ["403","Prigionieri"],
+  ["404","Il guerriero ombra"],
+  ["405","Missione umanitaria"],
+  ["406","Droidi nomadi"],
+  ["407","Le tenebre di Umbara"],
+  ["408","Il generale"],
+  ["409","Insubordinazione"],
+  ["410","La carneficina di Krell"],
+  ["411","Il prezzo del pacifismo"],
+  ["412","Gli schiavi della Repubblica"],
+  ["413","Fuga da Kadavo"],
+  ["414","Un amico in difficoltà"],
+  ["415","Il volto dell'inganno"],
+  ["416","Amici e nemici"],
+  ["417","Il cubo"],
+  ["418","L'enigma della verità"],
+  ["419","La vendetta di Dooku"],
+  ["420","Mercenari"],
+  ["421","Fratelli"],
+  ["422","Vendetta"],
+  ["502","Guerra su due fronti"],
+  ["503","Il leader della rivolta"],
+  ["504","I due re"],
+  ["505","Il punto critico"],
+  ["506","La messe"],
+  ["507","Una prova di Forza"],
+  ["508","Il legame"],
+  ["509","Un legame necessario"],
+  ["510","Le armi segrete"],
+  ["511","Giorno di sole nel nulla"],
+  ["512","Disperso in azione"],
+  ["513","Punto di non ritorno"],
+  ["501","Il maestro e l'apprendista"],
+  ["514","Ombre su Mandalore"],
+  ["515","L'ombra della ragione"],
+  ["516","Il senza legge"],
+  ["517","Sabotaggio"],
+  ["518","Il Jedi che sapeva troppo"],
+  ["519","Caccia al Jedi"],
+  ["520","Il Jedi sbagliato"],
+  ["601","L'ignoto"],
+  ["602","Cospirazione"],
+  ["603","Il fuggitivo"],
+  ["604","Ordini"],
+  ["605","Un vecchio amico"],
+  ["606","L'ascesa di Clovis"],
+  ["607","Crisi al cuore"],
+  ["608","La scomparsa (prima parte)"],
+  ["609","La scomparsa (seconda parte)"],
+  ["610","Quella perduta"],
+  ["611","Voci"],
+  ["612","Destino"],
+  ["613","Sacrificio"],
+  ["705","Via con Trace"],
+  ["706","Prendere o lasciare"],
+  ["707","Debito pericoloso"],
+  ["708","Di nuovo insieme"],
+  ["701","La Bad Batch"],
+  ["702","Un'eco distante"],
+  ["703","Sulle ali dei Keeradaks"],
+  ["704","Questioni in sospeso"],
+  ["709","Vecchi amici non dimenticati"],
+  ["710","L'apprendista fantasma"],
+  ["711","Sconvolgimento"],
+  ["712","Vittoria e morte"]
+];
+
 const TIPO_LAB = {film:"Film",serie:"Serie TV",animazione:"Animazione",corto:"Corto",
                   romanzo:"Romanzo",fumetto:"Fumetto",gioco:"Videogioco",manga:"Manga",audiolibro:"Audiolibro"};
 
@@ -1797,6 +1999,7 @@ const TIPO_LAB = {film:"Film",serie:"Serie TV",animazione:"Animazione",corto:"Co
 const TIPI_FILTRO = ["film","serie","corto","gioco","romanzo","fumetto","manga","audiolibro"];
 const state = {q:"", tipi:new Set(TIPI_FILTRO)};
 const schedeIngrandite = new Set();
+const guideEpisodiAperte = new Set();
 const vistaMobile = matchMedia("(max-width:700px)");
 const SELETTORE_SCHEDE_MOBILI =
   '.item[data-opera-tipo="romanzo"],.item[data-opera-tipo="fumetto"],.item[data-opera-tipo="manga"],.item[data-opera-tipo="audiolibro"]';
@@ -1928,16 +2131,47 @@ function lista(items){
   }).join("");
 }
 
+function pannelloCloneWars(o, aperto){
+  const rigaFilm = `<li class="episode-row is-film">
+    <span class="episode-order">FILM</span>
+    <span class="episode-code">2008</span>
+    <span class="episode-name">The Clone Wars – Il film</span>
+  </li>`;
+  const righe = CLONE_WARS_EPISODI.map(([codice,titolo],i)=>{
+    const rigaEpisodio = `<li class="episode-row">
+      <span class="episode-order">${String(i+1).padStart(3,"0")}</span>
+      <span class="episode-code">S${codice[0]} E${codice.slice(1)}</span>
+      <span class="episode-name">${esc(titolo)}</span>
+    </li>`;
+    return (i === 2 ? rigaFilm : "") + rigaEpisodio;
+  }).join("");
+  return `<div class="episode-guide" id="guida-${o.id}" aria-hidden="${String(!aperto)}">
+    <div class="episode-guide-clip">
+      <section class="episode-guide-card" aria-label="Ordine cronologico degli episodi di The Clone Wars">
+        <header class="episode-guide-head">
+          <strong>Ordine cronologico degli episodi</strong>
+        </header>
+        <div class="episode-guide-scroll" tabindex="0">
+          <ol class="episode-list">${righe}</ol>
+        </div>
+      </section>
+    </div>
+  </div>`;
+}
+
 function voce(o, lato){
   const tipo = tipoGerarchico(o);
   const tipoLab = etichettaTipo(o);
   const sottotitolo = o.stagioni || o.dettaglio || "";
   const espandibile = ["romanzo","fumetto","manga","audiolibro"].includes(tipo);
+  const haGuidaEpisodi = o.guidaEpisodi === "clone-wars";
+  const guidaAperta = haGuidaEpisodi && guideEpisodiAperte.has(o.id);
+  const tagTesta = haGuidaEpisodi ? "button" : "div";
   const meta = [tipoLab, o.rl].concat(o.lg?["Legends"]:[]);
   const mostraImg = COPERTINE_ATTIVE && o.img;
   const src = mostraImg ? `<img data-shot src="immagini/${esc(o.img)}?v=${CACHE_BUST}" alt="" draggable="false" loading="lazy" decoding="async" fetchpriority="low">` : "";
-  return `<li class="item ${lato} ${o.lg?"legends":""} ${schedeIngrandite.has(o.id)?"mobile-ingrandita":""}" id="opera-${o.id}" data-opera-tipo="${esc(tipo)}">
-    <div class="head">
+  return `<li class="item ${lato} ${o.lg?"legends":""} ${schedeIngrandite.has(o.id)?"mobile-ingrandita":""} ${haGuidaEpisodi?"has-episode-guide":""} ${guidaAperta?"episode-guide-open":""}" id="opera-${o.id}" data-opera-tipo="${esc(tipo)}">
+    <${tagTesta} class="head"${haGuidaEpisodi?` type="button" aria-expanded="${String(guidaAperta)}" aria-controls="guida-${o.id}" aria-label="${guidaAperta?"Chiudi":"Apri"} l'ordine cronologico degli episodi di The Clone Wars"`:""}>
       <figure class="shot${mostraImg?"":" vuoto"}" data-tipo="${esc(tipoLab)}">${src}</figure>
       <span class="txt">
         <span class="yr">${esc(o.yl)}</span>
@@ -1945,7 +2179,9 @@ function voce(o, lato){
         ${sottotitolo?`<span class="stagioni">${esc(sottotitolo)}</span>`:""}
         <span class="meta">${meta.map(m=>`<span>${esc(m)}</span>`).join("")}</span>
       </span>
-    </div>
+      ${haGuidaEpisodi?'<span class="episode-expand" aria-hidden="true"></span>':""}
+    </${tagTesta}>
+    ${haGuidaEpisodi?pannelloCloneWars(o,guidaAperta):""}
     ${espandibile?'<span class="mobile-expand" aria-hidden="true"></span>':""}
   </li>`;
 }
@@ -2242,6 +2478,27 @@ document.addEventListener("click", ev=>{
     setTimeout(()=>t.classList.remove("mobile-pressed"), 240);
   }
   scrollaProtetto(document.getElementById(t.dataset.go));
+});
+
+function impostaGuidaEpisodi(scheda, apri){
+  const id = scheda.id.replace(/^opera-/, "");
+  const testa = scheda.querySelector(":scope > .head");
+  const pannello = scheda.querySelector(":scope > .episode-guide");
+  scheda.classList.toggle("episode-guide-open",apri);
+  testa.setAttribute("aria-expanded",String(apri));
+  testa.setAttribute("aria-label",`${apri?"Chiudi":"Apri"} l'ordine cronologico degli episodi di The Clone Wars`);
+  pannello.setAttribute("aria-hidden",String(!apri));
+  if(apri) guideEpisodiAperte.add(id);
+  else guideEpisodiAperte.delete(id);
+  programmaProgressoEre();
+  setTimeout(programmaProgressoEre,460);
+}
+
+document.addEventListener("click", ev=>{
+  const testa = ev.target.closest(".item.has-episode-guide > .head");
+  if(!testa) return;
+  const scheda = testa.closest(".item.has-episode-guide");
+  impostaGuidaEpisodi(scheda,!scheda.classList.contains("episode-guide-open"));
 });
 
 filters.addEventListener("click", ev=>{
