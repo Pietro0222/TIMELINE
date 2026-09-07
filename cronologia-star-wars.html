@@ -109,6 +109,7 @@ body{
     radial-gradient(ellipse at center,transparent 30%,rgba(1,3,8,.24) 100%),
     linear-gradient(to bottom,rgba(3,5,11,.18),rgba(3,5,11,.5))}
 .wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:0 20px 110px}
+.mobile-browser-shield{display:none}
 
 /* ============================== testata ================================ */
 @font-face{font-family:"Aurebesh";src:url("font/Aurebesh.ttf") format("truetype");
@@ -735,6 +736,16 @@ body{
 
 /* sotto i 700px la linea si sposta a sinistra: una colonna sola */
 @media (max-width:700px){
+  /* Nei browser mobili con barra trasparente (come Telegram su iOS),
+     nasconde le opere che scorrono dietro ai comandi nativi. Compare
+     gradualmente solo quando l'intestazione del sito si compatta. */
+  .mobile-browser-shield{
+    display:block;position:fixed;top:0;left:0;right:0;z-index:29;
+    height:clamp(70px,calc(env(safe-area-inset-top,0px) + 58px),96px);
+    pointer-events:none;opacity:var(--scroll-header-p);
+    background:linear-gradient(to bottom,#03050B 0%,#03050B 82%,rgba(3,5,11,.96) 91%,rgba(3,5,11,0) 100%);
+    will-change:opacity;transform:translateZ(0)
+  }
   .controls{
     display:grid;grid-template-columns:max-content minmax(0,1fr);
     gap:8px;padding-top:10px;padding-bottom:10px
@@ -923,6 +934,7 @@ body{
 <div id="pianeti" aria-hidden="true"></div>
 
 <div class="wrap">
+  <div class="mobile-browser-shield" aria-hidden="true"></div>
   <div class="top-panel" aria-hidden="true"></div>
   <header class="masthead">
     <h1>Timeline Canonica</h1>
