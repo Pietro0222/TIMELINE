@@ -741,21 +741,46 @@ body{
   .ribbon::before{
     top:calc(-1*var(--ribbon-gap) - var(--mobile-shield-extra,0px))
   }
+  /* Nello stato compatto l'intero blocco di navigazione perde un altro
+     10%, senza modificare l'aspetto iniziale a pagina ferma. */
+  .ribbon-track{
+    padding:calc(6px - .6px*var(--scroll-header-p)) 15px
+  }
+  .seg{
+    width:calc(120px - 12px*var(--scroll-header-p));
+    padding:calc(10.45px*(1 - var(--p)) + 5.13px*var(--p))
+      calc(11.4px - 1.14px*var(--scroll-header-p))
+      calc(11.4px*(1 - var(--p)) + 5.13px*var(--p));
+    border-radius:calc(9.5px - .95px*var(--scroll-header-p))
+  }
+  .sigillo{
+    width:calc(43.7px - 21.47px*var(--p));
+    height:calc(43.7px - 21.47px*var(--p))
+  }
   .controls{
     display:grid;grid-template-columns:max-content minmax(0,1fr);
-    gap:8px;padding-top:10px;padding-bottom:10px
+    gap:calc(8px - .8px*var(--scroll-header-p));
+    padding-top:10px;padding-bottom:10px
   }
-  .mobile-control-switches{display:flex;grid-column:1/-1;gap:8px;min-width:0}
+  .mobile-control-switches{display:flex;grid-column:1/-1;
+    gap:calc(8px - .8px*var(--scroll-header-p));min-width:0}
   .mobile-control-toggle,.mobile-panel-close{
-    min-height:40px;border:1px solid var(--line);border-radius:8px;
+    min-height:calc(40px - 4px*var(--scroll-header-p));
+    border:1px solid var(--line);
+    border-radius:calc(8px - .8px*var(--scroll-header-p));
     background:rgba(10,16,27,.88);color:var(--ink-dim);
-    font-family:var(--display);font-size:13px;font-weight:600;
+    font-family:var(--display);
+    font-size:calc(13px - 1.3px*var(--scroll-header-p));font-weight:600;
     letter-spacing:.04em;cursor:pointer;touch-action:manipulation
   }
-  .mobile-control-toggle{padding:8px 15px}
+  .mobile-control-toggle{
+    padding:calc(8px - .8px*var(--scroll-header-p))
+      calc(15px - 1.5px*var(--scroll-header-p))
+  }
   #mobileSearchToggle{
-    position:relative;display:grid;place-items:center;flex:0 0 40px;
-    width:40px;padding:0
+    position:relative;display:grid;place-items:center;
+    flex:0 0 calc(40px - 4px*var(--scroll-header-p));
+    width:calc(40px - 4px*var(--scroll-header-p));padding:0
   }
   #mobileFiltersToggle{position:relative}
   .search-toggle-icon{
@@ -788,19 +813,39 @@ body{
     border-radius:50%;background:#9DC4E8;
     box-shadow:0 0 7px rgba(157,196,232,.75)
   }
-  /* intestazioni delle epoche ridotte del 10% come blocco unico */
-  .group-head{padding:10.8px 0 23.4px}
-  .group-head h2{font-size:27.7px;gap:12.2px}
-  .g-sigillo{width:33.2px;height:33.2px}
-  .g-sigillo.vuoto{width:17.1px;height:17.1px;border-width:1.35px}
-  .group-head .aurebesh{margin:1px 0 4.5px;font-size:9.7px}
-  .group-head .g-date{font-size:16.8px}
+  /* L'intestazione dell'epoca conserva la misura attuale all'inizio e si
+     riduce progressivamente del 15% insieme all'header durante lo scroll. */
+  .group-head{
+    padding:calc(10.8px - 1.62px*var(--scroll-header-p)) 0
+      calc(23.4px - 3.51px*var(--scroll-header-p))
+  }
+  .group-head h2{
+    font-size:calc(27.7px - 4.155px*var(--scroll-header-p));
+    gap:calc(12.2px - 1.83px*var(--scroll-header-p))
+  }
+  .g-sigillo{
+    width:calc(33.2px - 4.98px*var(--scroll-header-p));
+    height:calc(33.2px - 4.98px*var(--scroll-header-p))
+  }
+  .g-sigillo.vuoto{
+    width:calc(17.1px - 2.565px*var(--scroll-header-p));
+    height:calc(17.1px - 2.565px*var(--scroll-header-p));
+    border-width:calc(1.35px - .2025px*var(--scroll-header-p))
+  }
+  .group-head .aurebesh{
+    margin:calc(1px - .15px*var(--scroll-header-p)) 0
+      calc(4.5px - .675px*var(--scroll-header-p));
+    font-size:calc(9.7px - 1.455px*var(--scroll-header-p))
+  }
+  .group-head .g-date{
+    font-size:calc(16.8px - 2.52px*var(--scroll-header-p))
+  }
   /* A nastro esteso i comandi respirano di piu'; durante lo scroll lo
      spazio scende progressivamente da 14px a 7px, sempre simmetrico. */
   .controls:not(.mobile-search-open):not(.mobile-filters-open){
     margin-top:calc(-6px + 6px*var(--scroll-header-p));
-    padding-top:calc(14px - 13px*var(--scroll-header-p));
-    padding-bottom:calc(14px - 7px*var(--scroll-header-p))
+    padding-top:calc(14px - 7.7px*var(--scroll-header-p));
+    padding-bottom:calc(14px - 7.7px*var(--scroll-header-p))
   }
   .search-wrap,.filters-wrap{display:none;min-width:0}
   .search-wrap .search{flex:1;min-width:0;padding-right:13px}
