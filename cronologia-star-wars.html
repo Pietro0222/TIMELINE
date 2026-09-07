@@ -58,10 +58,21 @@ body{
 /* ============================ campo stellare ============================ */
 #sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
   contain:strict;isolation:isolate;transform:translateZ(0);backface-visibility:hidden;
-  background:
+  background-color:#03050B;
+  /* Una trama stellare molto discreta fa parte del fondale statico. I tre
+     strati in #stelle continuano a produrre tutto il parallasse, ma se il
+     webview i sospende durante uno scorrimento rapido resta comunque una
+     superficie spaziale completa anziche' il solo colore quasi nero. */
+  background-image:
+    radial-gradient(circle at 23px 31px,rgba(242,247,255,.46) 0 .65px,transparent .95px),
+    radial-gradient(circle at 91px 137px,rgba(193,216,250,.34) 0 .7px,transparent 1px),
+    radial-gradient(circle at 211px 83px,rgba(255,237,207,.27) 0 .75px,transparent 1.1px),
     radial-gradient(ellipse 85% 58% at 10% 7%,rgba(38,67,112,.25),transparent 66%),
     radial-gradient(ellipse 72% 52% at 90% 88%,rgba(67,39,91,.18),transparent 68%),
-    linear-gradient(180deg,#080D19 0%,#03050C 43%,#060814 74%,#020308 100%)}
+    linear-gradient(180deg,#080D19 0%,#03050C 43%,#060814 74%,#020308 100%);
+  background-size:173px 211px,257px 331px,389px 487px,auto,auto,auto;
+  background-position:0 0,37px 59px,83px 127px,0 0,0 0,0 0;
+  background-repeat:repeat,repeat,repeat,no-repeat,no-repeat,no-repeat}
 /* Velature interstellari statiche: aggiungono profondita' senza nuovi
    elementi, immagini o animazioni e quindi senza lavoro extra durante
    lo scorrimento. */
