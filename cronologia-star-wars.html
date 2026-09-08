@@ -3418,6 +3418,10 @@ function aggiornaIngombroHeader(p,forza=false){
   ultimoIngombroHeader = chiave;
   controls.style.top = topControlli.toFixed(2)+"px";
   list.style.minHeight = `calc(100vh - ${altezzaBarra.toFixed(2)}px)`;
+  /* La transizione mobile deve cominciare sotto il nastro e i controlli.
+     La variabile globale non viene piu' aggiornata durante lo scroll per
+     motivi di fluidita': la passiamo quindi soltanto all'overlay che la usa. */
+  jumpTransition.style.setProperty("--bar-h",altezzaBarra.toFixed(2)+"px");
   const topEpoca = altezzaBarra.toFixed(2)+"px";
   intestazioniEpoche.forEach(intestazione=>intestazione.style.top=topEpoca);
 }
