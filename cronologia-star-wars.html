@@ -1001,7 +1001,9 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
      Estendere verso l'alto lo sfondo dello stesso nastro sticky mantiene
      invece la copertura nel livello che Telegram mostra correttamente. */
   .ribbon::before{
-    top:calc(-1*var(--ribbon-gap) - var(--mobile-shield-extra,0px))
+    top:calc(-1*var(--ribbon-gap) - 150px);
+    clip-path:inset(calc(150px - var(--mobile-shield-extra,0px)) 0 0);
+    will-change:clip-path
   }
   /* Nello stato compatto l'intero blocco di navigazione perde un altro
      10%, senza modificare l'aspetto iniziale a pagina ferma. */
@@ -2853,8 +2855,9 @@ function spia(gs){
   intestazioniEpoche = [...list.querySelectorAll(".group-head")];
   const progressoCorrente = progressoHeaderCorrente.toFixed(4);
   if(vistaMobile.matches){
-    intestazioniEpoche.forEach(intestazione=>
-      intestazione.style.setProperty("--scroll-header-p",progressoCorrente));
+    intestazioniEpoche.forEach((intestazione,indice)=>
+      intestazione.style.setProperty("--scroll-header-p",
+        indice ? "1" : progressoCorrente));
   }
   misuraSezioniTimeline();
   if("ResizeObserver" in window){
@@ -3347,6 +3350,7 @@ const RIBBON_RANGE = 160;
 const RIBBON_GAP = 12; /* deve combaciare con --ribbon-gap nel CSS */
 const PASSI_MISURA_HEADER = 10;
 let progressoHeaderCorrente = 0;
+let corsaHeader = RIBBON_RANGE;
 let campioniAltezzeHeader = [];
 let ultimoRibbonP = "", ultimoShieldExtra = "", ultimoIngombroHeader = "";
 
@@ -3358,6 +3362,14 @@ let ultimoRibbonP = "", ultimoShieldExtra = "", ultimoIngombroHeader = "";
 function misuraAltezzeNavigazione(){
   const wrap = document.querySelector(".wrap");
   if(!wrap) return;
+  const masthead = document.querySelector(".masthead");
+  const margineNastro = parseFloat(getComputedStyle(ribbonNav).marginTop) || 0;
+  /* La corsa parte davvero da zero e termina quando il nastro raggiunge
+     il proprio top sticky. Prima il primo pixel di scroll produceva gia'
+     circa il 15% di contrazione, causando uno scatto evidente su WebKit. */
+  corsaHeader = Math.max(1,
+    (masthead?.offsetTop || 0)+(masthead?.offsetHeight || RIBBON_RANGE)
+      +margineNastro-RIBBON_GAP);
   const metro = document.createElement("div");
   metro.setAttribute("aria-hidden","true");
   Object.assign(metro.style,{
@@ -3417,13 +3429,24 @@ function aggiornaIngombroHeader(p,forza=false){
   if(!forza && chiave === ultimoIngombroHeader) return;
   ultimoIngombroHeader = chiave;
   controls.style.top = topControlli.toFixed(2)+"px";
-  list.style.minHeight = `calc(100vh - ${altezzaBarra.toFixed(2)}px)`;
+  /* La timeline reale e' molto piu' alta del viewport: modificarne la
+     min-height durante ogni fotogramma invalidava inutilmente tutto il suo
+     layout. Serve soltanto nello stato vuoto. */
+  if(!intestazioniEpoche.length)
+    list.style.minHeight = `calc(100vh - ${altezzaBarra.toFixed(2)}px)`;
+  else if(list.style.minHeight) list.style.removeProperty("min-height");
   /* La transizione mobile deve cominciare sotto il nastro e i controlli.
      La variabile globale non viene piu' aggiornata durante lo scroll per
      motivi di fluidita': la passiamo quindi soltanto all'overlay che la usa. */
   jumpTransition.style.setProperty("--bar-h",altezzaBarra.toFixed(2)+"px");
   const topEpoca = altezzaBarra.toFixed(2)+"px";
-  intestazioniEpoche.forEach(intestazione=>intestazione.style.top=topEpoca);
+  const cimaCompatta = interpolaCampioniHeader("nastro",1) ?? cima;
+  const barraCompatta = interpolaCampioniHeader("controlli",1) ?? barra;
+  const topEpocaCompatta = (RIBBON_GAP+cimaCompatta+barraCompatta).toFixed(2)+"px";
+  intestazioniEpoche.forEach((intestazione,indice)=>{
+    const top = indice ? topEpocaCompatta : topEpoca;
+    if(intestazione.style.top !== top) intestazione.style.top=top;
+  });
 }
 
 function applicaProgressoHeader(pTesto,shieldTesto){
@@ -3434,22 +3457,21 @@ function applicaProgressoHeader(pTesto,shieldTesto){
   ribbonNav.style.setProperty("--p",pTesto);
   ribbonNav.style.setProperty("--scroll-header-p",pTesto);
   ribbonNav.style.setProperty("--mobile-shield-extra",shieldTesto+"px");
-  controls.style.setProperty("--scroll-header-p",pTesto);
   if(vistaMobile.matches){
-    intestazioniEpoche.forEach(intestazione=>
-      intestazione.style.setProperty("--scroll-header-p",pTesto));
+    controls.style.setProperty("--scroll-header-p",pTesto);
+    /* Durante la contrazione e' visibile soltanto la prima intestazione.
+       Le successive nascono gia' compatte: non serve ricalcolarle tutte a
+       ogni fotogramma mentre sono a migliaia di pixel dallo schermo. */
+    intestazioniEpoche.forEach((intestazione,indice)=>
+      intestazione.style.setProperty("--scroll-header-p",indice ? "1" : pTesto));
   }
   aggiornaIngombroHeader(progressoHeaderCorrente);
 }
 
 function aggiornaRibbon(forza=false){
-  const top = ribbonNav.getBoundingClientRect().top - RIBBON_GAP;
-  /* su schermi stretti il titolo e' cosi' basso che il nastro parte gia'
-     dentro alla finestra di rimpicciolimento: senza questa guardia i
-     riquadri risultavano "schiacciati" anche a pagina non ancora
-     scorsa. Finche' non si e' scorso per davvero, --p resta a 0. */
-  const p = window.scrollY <= 0 ? 0
-    : Math.min(1, Math.max(0, (RIBBON_RANGE - top) / RIBBON_RANGE));
+  /* Dipende soltanto dallo scroll e dalla corsa misurata fuori dal ciclo:
+     nessuna lettura di layout dell'elemento sticky durante l'animazione. */
+  const p = Math.min(1,Math.max(0,window.scrollY/corsaHeader));
   /* La barra trasparente di Telegram altera la posizione percepita del
      viewport: la schermatura dipende quindi dallo scroll reale, non dalla
      posizione sticky del nastro. Dopo pochi pixel diventa del tutto opaca. */
