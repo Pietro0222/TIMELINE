@@ -2543,7 +2543,7 @@ const mobileSearchClose = document.getElementById("mobileSearchClose");
 const mobileFiltersClose = document.getElementById("mobileFiltersClose");
 const backTop = document.getElementById("backTop");
 const jumpTransition = document.getElementById("jumpTransition");
-let sezioniTimeline = [], segmentiRibbon = [];
+let sezioniTimeline = [], segmentiRibbon = [], intestazioniEpoche = [];
 let metricheSezioni = [], metricheTimelineAttese = false;
 let osservatoreDimensioni = null;
 let osservatoreCopertine = null;
@@ -2615,6 +2615,7 @@ function render(){
     if(osservatoreDimensioni) osservatoreDimensioni.disconnect();
     sezioniTimeline = [];
     segmentiRibbon = [];
+    intestazioniEpoche = [];
     metricheSezioni = [];
     osservatoreCopertine = null;
     list.innerHTML = state.tipi.size
@@ -2622,6 +2623,8 @@ function render(){
           Prova con una parola più corta o riattiva una tipologia.</div>`
       : `<div class="empty"><b>Nessuna tipologia visibile</b>
           Riattiva almeno uno dei filtri sopra.</div>`;
+    misuraAltezzeNavigazione();
+    aggiornaRibbon(true);
     return;
   }
 
@@ -2842,15 +2845,18 @@ function spia(gs){
   if(osservatoreDimensioni) osservatoreDimensioni.disconnect();
   sezioniTimeline = [...list.querySelectorAll(".group")];
   segmentiRibbon = [...ribbon.querySelectorAll(".seg")];
+  intestazioniEpoche = [...list.querySelectorAll(".group-head")];
+  const progressoCorrente = progressoHeaderCorrente.toFixed(4);
+  if(vistaMobile.matches){
+    intestazioniEpoche.forEach(intestazione=>
+      intestazione.style.setProperty("--scroll-header-p",progressoCorrente));
+  }
   misuraSezioniTimeline();
   if("ResizeObserver" in window){
     if(!osservatoreDimensioni) osservatoreDimensioni = new ResizeObserver(programmaMetricheTimeline);
     sezioniTimeline.forEach(sezione=>osservatoreDimensioni.observe(sezione));
   }
-  const cima = ribbonNav.offsetHeight;
-  const barra = controls.offsetHeight;
-  altezzaBarra = RIBBON_GAP+cima+barra;
-  document.documentElement.style.setProperty("--bar-h", altezzaBarra+"px");
+  misuraAltezzeNavigazione();
   ultimaEpocaAttiva = "";
   aggiornaProgressoEre();
 }
@@ -3162,6 +3168,7 @@ function impostaControlliMobili({ricerca,filtri,focusRicerca=false}){
   sincronizzaControlliMobili();
   if(!ricerca) searchInput.blur();
   requestAnimationFrame(()=>{
+    misuraAltezzeNavigazione();
     aggiornaTopPanel();
     aggiornaRibbon(true);
     if(focusRicerca) searchInput.focus({preventScroll:true});
@@ -3315,9 +3322,8 @@ let resizeSchedeId = null;
 window.addEventListener("resize", ()=>{
   cancelAnimationFrame(resizeSchedeId);
   resizeSchedeId = requestAnimationFrame(()=>{
-    altezzaBarra = RIBBON_GAP+ribbonNav.offsetHeight
-      + controls.offsetHeight;
-    document.documentElement.style.setProperty("--bar-h",altezzaBarra+"px");
+    misuraAltezzeNavigazione();
+    aggiornaRibbon(true);
     aggiornaIngombriSchede();
     programmaMetricheTimeline();
     ultimaEpocaAttiva = "";
@@ -3334,7 +3340,99 @@ window.addEventListener("resize", ()=>{
    attaccato alla barra di ricerca, senza salti. */
 const RIBBON_RANGE = 160;
 const RIBBON_GAP = 12; /* deve combaciare con --ribbon-gap nel CSS */
-let ultimoRibbonP = "", ultimoShieldExtra = "";
+const PASSI_MISURA_HEADER = 10;
+let progressoHeaderCorrente = 0;
+let campioniAltezzeHeader = [];
+let ultimoRibbonP = "", ultimoShieldExtra = "", ultimoIngombroHeader = "";
+
+/* Le dimensioni del nastro e dei controlli dipendono da molte proprieta'
+   reali (padding, gap, font e altezze). Leggerne l'offsetHeight subito dopo
+   averle cambiate, a ogni fotogramma, costringeva Safari e i WebView a due
+   layout sincroni durante lo scroll. Misuriamo invece dieci stati invisibili
+   una sola volta e interpoliamo i valori gia' pronti. */
+function misuraAltezzeNavigazione(){
+  const wrap = document.querySelector(".wrap");
+  if(!wrap) return;
+  const metro = document.createElement("div");
+  metro.setAttribute("aria-hidden","true");
+  Object.assign(metro.style,{
+    position:"fixed",left:"0",top:"0",width:wrap.clientWidth+"px",
+    visibility:"hidden",pointerEvents:"none",zIndex:"-1",
+    transform:"translate3d(-200vw,0,0)"
+  });
+  const nastroMisura = ribbonNav.cloneNode(true);
+  const controlliMisura = controls.cloneNode(true);
+  nastroMisura.style.position = "static";
+  nastroMisura.style.top = "auto";
+  controlliMisura.style.position = "static";
+  controlliMisura.style.top = "auto";
+  metro.append(nastroMisura,controlliMisura);
+  document.body.append(metro);
+
+  const nuoviCampioni = [];
+  for(let i=0;i<=PASSI_MISURA_HEADER;i++){
+    const valore = (i/PASSI_MISURA_HEADER).toFixed(4);
+    nastroMisura.style.setProperty("--p",valore);
+    nastroMisura.style.setProperty("--scroll-header-p",valore);
+    controlliMisura.style.setProperty("--scroll-header-p",valore);
+    nuoviCampioni.push({
+      nastro:nastroMisura.offsetHeight,
+      controlli:controlliMisura.offsetHeight
+    });
+  }
+  metro.remove();
+  campioniAltezzeHeader = nuoviCampioni;
+  ultimoIngombroHeader = "";
+  aggiornaIngombroHeader(progressoHeaderCorrente,true);
+}
+
+function interpolaCampioniHeader(proprieta,p){
+  if(!campioniAltezzeHeader.length) return null;
+  const posizione = Math.min(PASSI_MISURA_HEADER,
+    Math.max(0,p*PASSI_MISURA_HEADER));
+  const indice = Math.min(PASSI_MISURA_HEADER-1,Math.floor(posizione));
+  const frazione = posizione-indice;
+  const a = campioniAltezzeHeader[indice][proprieta];
+  const b = campioniAltezzeHeader[indice+1][proprieta];
+  return a+(b-a)*frazione;
+}
+
+function aggiornaIngombroHeader(p,forza=false){
+  let cima = interpolaCampioniHeader("nastro",p);
+  let barra = interpolaCampioniHeader("controlli",p);
+  /* Fallback usato soltanto nel primissimo avvio, prima che il nastro sia
+     stato renderizzato. Non viene mai eseguito durante lo scroll normale. */
+  if(cima === null || barra === null){
+    cima = ribbonNav.offsetHeight;
+    barra = controls.offsetHeight;
+  }
+  const topControlli = RIBBON_GAP+cima;
+  altezzaBarra = topControlli+barra;
+  const chiave = `${topControlli.toFixed(2)}|${altezzaBarra.toFixed(2)}`;
+  if(!forza && chiave === ultimoIngombroHeader) return;
+  ultimoIngombroHeader = chiave;
+  controls.style.top = topControlli.toFixed(2)+"px";
+  list.style.minHeight = `calc(100vh - ${altezzaBarra.toFixed(2)}px)`;
+  const topEpoca = altezzaBarra.toFixed(2)+"px";
+  intestazioniEpoche.forEach(intestazione=>intestazione.style.top=topEpoca);
+}
+
+function applicaProgressoHeader(pTesto,shieldTesto){
+  progressoHeaderCorrente = Number(pTesto);
+  /* Le variabili sono assegnate soltanto ai pochi elementi che le usano.
+     Prima --scroll-header-p viveva su <html> e ne invalidava inutilmente
+     tutta la lunga timeline a ogni pixel di scorrimento. */
+  ribbonNav.style.setProperty("--p",pTesto);
+  ribbonNav.style.setProperty("--scroll-header-p",pTesto);
+  ribbonNav.style.setProperty("--mobile-shield-extra",shieldTesto+"px");
+  controls.style.setProperty("--scroll-header-p",pTesto);
+  if(vistaMobile.matches){
+    intestazioniEpoche.forEach(intestazione=>
+      intestazione.style.setProperty("--scroll-header-p",pTesto));
+  }
+  aggiornaIngombroHeader(progressoHeaderCorrente);
+}
+
 function aggiornaRibbon(forza=false){
   const top = ribbonNav.getBoundingClientRect().top - RIBBON_GAP;
   /* su schermi stretti il titolo e' cosi' basso che il nastro parte gia'
@@ -3354,19 +3452,7 @@ function aggiornaRibbon(forza=false){
   if(!forza && pTesto === ultimoRibbonP && shieldTesto === ultimoShieldExtra) return;
   ultimoRibbonP = pTesto;
   ultimoShieldExtra = shieldTesto;
-  ribbonNav.style.setProperty("--p", pTesto);
-  document.documentElement.style.setProperty("--scroll-header-p",pTesto);
-  document.documentElement.style.setProperty("--mobile-shield-extra",shieldTesto+"px");
-  const cima = ribbonNav.offsetHeight;
-  document.documentElement.style.setProperty("--ribbon-h", cima+"px");
-  /* --bar-h deve seguire l'altezza VERA e attuale del nastro (che cambia
-     continuamente durante lo scroll): usare un valore calcolato una sola
-     volta al caricamento (quando il nastro e' ancora a grandezza piena)
-     lasciava troppo spazio vuoto sopra ai titoli delle epoche una volta
-     che il nastro si era rimpicciolito */
-  const barra = controls.offsetHeight;
-  altezzaBarra = RIBBON_GAP+cima+barra;
-  document.documentElement.style.setProperty("--bar-h", altezzaBarra+"px");
+  applicaProgressoHeader(pTesto,shieldTesto);
 }
 aggiornaRibbon(true);
 
@@ -3380,6 +3466,13 @@ function aggiornaTopPanel(){
 addEventListener("resize", aggiornaTopPanel);
 render();
 aggiornaTopPanel();
+if(document.fonts?.ready){
+  document.fonts.ready.then(()=>requestAnimationFrame(()=>{
+    misuraAltezzeNavigazione();
+    aggiornaRibbon(true);
+    programmaMetricheTimeline();
+  }));
+}
 
 /* altezza della pagina "congelata" una volta sola: i pianeti e la
    parallasse la condividono, cosi' restano coerenti fra loro anche se
