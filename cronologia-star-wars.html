@@ -1008,14 +1008,16 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   /* Nello stato compatto l'intero blocco di navigazione perde un altro
      10%, senza modificare l'aspetto iniziale a pagina ferma. */
   .ribbon-track{
-    padding:calc(6px - .6px*var(--scroll-header-p)) 15px
+    padding:calc(6px - .6px*var(--scroll-header-p)) 15px;
+    contain:layout style
   }
   .seg{
     width:calc(120px - 12px*var(--scroll-header-p));
     padding:calc(10.45px*(1 - var(--p)) + 5.13px*var(--p))
       calc(11.4px - 1.14px*var(--scroll-header-p))
       calc(11.4px*(1 - var(--p)) + 5.13px*var(--p));
-    border-radius:calc(9.5px - .95px*var(--scroll-header-p))
+    border-radius:calc(9.5px - .95px*var(--scroll-header-p));
+    contain:layout style
   }
   .sigillo{
     width:calc(43.7px - 21.47px*var(--p));
@@ -1081,7 +1083,8 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
      riduce progressivamente del 15% insieme all'header durante lo scroll. */
   .group-head{
     padding:calc(10.8px - 1.62px*var(--scroll-header-p)) 0
-      calc(23.4px - 3.51px*var(--scroll-header-p))
+      calc(23.4px - 3.51px*var(--scroll-header-p));
+    contain:layout style
   }
   .group-head h2{
     font-size:calc(27.7px - 4.155px*var(--scroll-header-p));
@@ -2866,6 +2869,7 @@ function spia(gs){
   }
   misuraAltezzeNavigazione();
   ultimaEpocaAttiva = "";
+  indiceEpocaAttiva = -1;
   aggiornaProgressoEre();
 }
 
@@ -2874,10 +2878,14 @@ function spia(gs){
    correttamente anche dopo una ricerca o il cambio dei filtri. */
 let progressoEreAtteso = false;
 let ultimaEpocaAttiva = "";
+let indiceEpocaAttiva = -1;
+let sospendiProgressoEre = false;
+let centraturaRibbonTimer = null;
 function lineaLetturaTimeline(){
   return altezzaBarra + 12;
 }
-function aggiornaProgressoEre(){
+function aggiornaProgressoEre(forza=false){
+  if(sospendiProgressoEre && !forza) return;
   const sezioni = sezioniTimeline;
   const segmenti = segmentiRibbon;
   if(!sezioni.length || !segmenti.length) return;
@@ -2888,11 +2896,23 @@ function aggiornaProgressoEre(){
   /* Rimane attiva l'ultima sezione il cui inizio e' stato superato.
      Cosi' gli spazi tra due gruppi non fanno saltare per un fotogramma
      l'indicatore all'ultima epoca della timeline. */
-  let corrente = 0;
+  let calcolata = 0;
   for(let i=0;i<metricheSezioni.length;i++){
-    if(metricheSezioni[i].top <= punto) corrente = i;
+    if(metricheSezioni[i].top <= punto) calcolata = i;
     else break;
   }
+
+  /* Otto pixel di isteresi impediscono che arrotondamenti e caricamenti
+     tardivi facciano alternare due epoche sui bordi della sezione. */
+  let corrente = calcolata;
+  if(!forza && indiceEpocaAttiva >= 0 && calcolata !== indiceEpocaAttiva){
+    if(calcolata > indiceEpocaAttiva
+      && punto < metricheSezioni[calcolata].top+8) corrente = indiceEpocaAttiva;
+    else if(calcolata < indiceEpocaAttiva
+      && punto > metricheSezioni[indiceEpocaAttiva].top-8) corrente = indiceEpocaAttiva;
+  }
+  corrente = Math.max(0,Math.min(segmenti.length-1,corrente));
+  indiceEpocaAttiva = corrente;
 
   const rCorrente = metricheSezioni[corrente];
   const avanzamento = Math.min(1,Math.max(0,
@@ -2925,11 +2945,19 @@ function aggiornaProgressoEre(){
     /* Durante un salto verticale non avvia una seconda animazione
        orizzontale per ogni epoca attraversata. Al termine il segmento
        corretto viene centrato una sola volta. */
-    if(matchMedia("(max-width:760px)").matches && !scrollAnimId){
-      const sinistra = Math.max(0,Math.min(ribbon.scrollWidth-ribbon.clientWidth,
-        segmentoCorrente.offsetLeft-(ribbon.clientWidth-segmentoCorrente.offsetWidth)/2));
-      ribbon.scrollTo({left:sinistra,behavior:
-        matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth"});
+    if(vistaMobile.matches && !scrollAnimId){
+      clearTimeout(centraturaRibbonTimer);
+      /* La centratura parte soltanto dopo che lo scroll verticale si e'
+         assestato: due animazioni perpendicolari simultanee facevano
+         sfarfallare maschere e ombre nel compositore di WebKit. */
+      centraturaRibbonTimer = setTimeout(()=>{
+        centraturaRibbonTimer = null;
+        if(scrollAnimId) return;
+        const sinistra = Math.max(0,Math.min(ribbon.scrollWidth-ribbon.clientWidth,
+          segmentoCorrente.offsetLeft-(ribbon.clientWidth-segmentoCorrente.offsetWidth)/2));
+        ribbon.scrollTo({left:sinistra,behavior:
+          matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth"});
+      },100);
     }
   }
 }
@@ -3016,22 +3044,23 @@ function easeInOutQuart(t){
 }
 function easeInQuad(t){ return t*t; }
 function easeOutSine(t){ return Math.sin(Math.PI*t/2); }
-function aggiornaDopoScrollProtetto(){
+function aggiornaDopoScrollProtetto(forzaEpoca=false){
   ultimaEpocaAttiva = "";
   aggiornaRibbon(true);
-  aggiornaProgressoEre();
+  aggiornaProgressoEre(forzaEpoca);
   aggiornaBackTop();
   aggiornaParallasse();
 }
 function terminaScrollProtetto(){
   scrollAnimId = null;
+  sospendiProgressoEre = false;
   if(scrollSaltoTimer){
     clearTimeout(scrollSaltoTimer);
     scrollSaltoTimer = null;
   }
   jumpTransition.classList.remove("is-visible","is-exiting","verso-alto");
   if(scrollBlocco) scrollBlocco();
-  aggiornaDopoScrollProtetto();
+  aggiornaDopoScrollProtetto(true);
 }
 function animaTrattoScroll(startY,targetY,durata,
   alTermine=terminaScrollProtetto,easing=easeInOutCubic){
@@ -3053,6 +3082,7 @@ function annullaScrollProtetto(){
     scrollSaltoTimer = null;
   }
   jumpTransition.classList.remove("is-visible","is-exiting","verso-alto");
+  sospendiProgressoEre = false;
   if(scrollBlocco) scrollBlocco();
 }
 function scrollaProtetto(el){
@@ -3064,6 +3094,7 @@ function scrollaProtetto(el){
   const targetY = Math.max(0,Math.min(maxY,el.getBoundingClientRect().top + scrollY));
   const distanza = targetY - startY;
   if(Math.abs(distanza) < 2) return;
+  sospendiProgressoEre = true;
 
   /* Le poche copertine iniziali della destinazione vengono richieste subito,
      mentre l'animazione e' ancora in corso, invece che tutte insieme dopo
