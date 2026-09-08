@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#03050B">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400..700&family=Saira+Condensed:wght@500..800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Saira+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#03050B;
@@ -1173,8 +1173,11 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   .item.film .txt,.item.serie .txt,.item.corto .txt,.item.gioco .txt{padding:14px 15px 16px}
   .item:is(.serie,.corto) .txt{padding:0}
   .group-head h2{justify-content:flex-start}
-  .group-head .g-date{text-align:left;margin-left:50px}
-  .group-head .aurebesh{text-align:left;margin-left:50px}
+  .group-head .g-date,
+  .group-head .aurebesh{
+    text-align:left;
+    margin-left:calc(45.4px - 6.81px*var(--scroll-header-p))
+  }
   .item[data-opera-tipo="romanzo"] .head,
   .item[data-opera-tipo="fumetto"] .head,
   .item[data-opera-tipo="manga"] .head,
