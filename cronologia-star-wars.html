@@ -791,7 +791,7 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   .jump-transition{
     --timeline-side-pad:20px;
     --timeline-x:calc(var(--timeline-side-pad) + 14px);
-    display:block;position:fixed;z-index:90;overflow:hidden;
+    display:block;position:fixed;z-index:25;overflow:hidden;
     top:calc(var(--bar-h,0px) + 12px);right:0;bottom:0;left:0;
     opacity:0;visibility:hidden;pointer-events:none;contain:strict;isolation:isolate;
     background:
@@ -1370,14 +1370,14 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   </div>
 
   <main id="list"></main>
+  <div class="jump-transition" id="jumpTransition" aria-hidden="true">
+    <span class="jump-line-fade"></span>
+  </div>
 </div>
 
 <button class="back-top" id="backTop" type="button" aria-label="Torna all'inizio">
   <span aria-hidden="true"></span>
 </button>
-<div class="jump-transition" id="jumpTransition" aria-hidden="true">
-  <span class="jump-line-fade"></span>
-</div>
 
 <script>
 /* Le immagini sono elementi visivi del sito, non oggetti trascinabili. */
