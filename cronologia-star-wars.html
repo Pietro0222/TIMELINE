@@ -647,12 +647,16 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
    modifiche ai riquadri. La tinta dell'epoca resta discreta ma leggibile. */
 .item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
   [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .title{
-  color:#EDF4FC;font-size:21.5px;font-weight:600;line-height:1.12;
+  color:#EDF4FC;font-size:20.96px;font-weight:600;line-height:1.12;
   text-shadow:0 0 11px rgba(226,234,244,.12)
 }
 .item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
+  [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .yr{
+  font-size:14.14px
+}
+.item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
   [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .meta{
-  color:var(--ink-faint);font-size:11.5px;opacity:.7
+  color:var(--ink-faint);font-size:11.21px;opacity:.7
 }
 .item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
   [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .meta span:first-child{
@@ -937,9 +941,11 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   .item.dx.has-comic-guide .comic-guide{margin-right:auto}
   .item.sx.has-comic-guide .episode-expand{left:10px;right:auto}
   .item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
-    [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .title{font-size:17.42px}
+    [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .title{font-size:16.98px}
   .item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
-    [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .meta{font-size:9.32px}
+    [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .yr{font-size:11.46px}
+  .item:is([data-opera-tipo="romanzo"],[data-opera-tipo="fumetto"],
+    [data-opera-tipo="manga"],[data-opera-tipo="audiolibro"]) .meta{font-size:9.08px}
   .item.film{width:min(583.2px,81%);margin-top:11.34px;margin-bottom:11.34px}
   .item.film .txt{padding:12.96px 16.2px 15.39px}
   .item.film .title{font-size:21.87px}
