@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#03050B">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Saira+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400..700&family=Saira+Condensed:wght@500..800&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#03050B;
@@ -167,7 +167,7 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
    perche' dipende dal contenuto del titolo/nastro */
 .top-panel{position:absolute;top:0;left:50%;width:100vw;margin-left:-50vw;
   height:var(--top-panel-h,0px);z-index:-1;
-  background:rgba(3,5,11,.97);backdrop-filter:blur(12px)}
+  background:rgba(3,5,11,.97)}
 .masthead{padding:52px 0 26px}
 .masthead h1{
   font-family:var(--display);font-weight:700;text-transform:uppercase;
@@ -360,7 +360,7 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
    fuori da .wrap indipendentemente da quanto e' largo lo schermo */
 .controls::before{content:"";position:absolute;top:0;bottom:0;left:50%;
   width:100vw;margin-left:-50vw;
-  background:rgba(3,5,11,.97);backdrop-filter:blur(12px);
+  background:rgba(3,5,11,.97);
   border-bottom:1px solid var(--line);z-index:-1}
 .search-wrap{position:relative}
 .filters-wrap{min-width:0}
@@ -392,7 +392,7 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
 .tally:empty{padding-top:0;min-height:0}
 
 /* ============================== gruppi ================================= */
-.group{margin-top:38px}
+.group{margin-top:38px;contain:layout style}
 /* solo la prima epoca: a riposo (pagina non ancora scorsa) deve gia'
    trovarsi vicina alla barra sopra, alla stessa distanza che si crea
    piu' in basso una volta agganciata sotto il nastro/barra di ricerca */
@@ -971,26 +971,21 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
 
 /* sotto i 700px la linea si sposta a sinistra: una colonna sola */
 @media (max-width:700px){
-  /* Riserva separata per i WebView iOS: durante il rientro verso la cima
-     WebKit puo' perdere per un fotogramma i livelli fixed complessi. Questa
-     superficie appartiene invece al documento, copre tutta la timeline e
-     non puo' essere sospesa insieme a #sky e #stelle. */
+  /* Se un browser mobile sospende per un istante i livelli fixed durante
+     uno scroll molto rapido, affiora un fondale blu-notte invece del nero. */
+  html,body{background-color:#050914}
   body{position:relative;isolation:isolate}
-  body::before{
-    content:"";position:absolute;z-index:0;pointer-events:none;
-    inset:0;
-    background-color:#03050B;
+  body::before{content:none}
+  /* Questa trama appartiene alla timeline che scorre, non al compositore
+     fixed del parallasse. E' volutamente tenue quando il cielo e' presente,
+     ma resta sempre dipinta durante gli scroll inerziali di iOS/Telegram. */
+  .wrap{
     background-image:
-      var(--stelle-statiche),
-      radial-gradient(circle at 23px 31px,rgba(242,247,255,.42) 0 .65px,transparent .95px),
-      radial-gradient(circle at 91px 137px,rgba(193,216,250,.3) 0 .7px,transparent 1px),
-      radial-gradient(circle at 211px 83px,rgba(255,237,207,.24) 0 .75px,transparent 1.1px),
-      radial-gradient(ellipse 90% 55% at 12% 18%,rgba(38,67,112,.22),transparent 68%),
-      linear-gradient(180deg,#080D19 0%,#03050C 48%,#060814 78%,#020308 100%);
-    background-size:520px 820px,173px 211px,257px 331px,389px 487px,
-      100% max(900px,100lvh),100% max(900px,100lvh);
-    background-position:0 0,0 0,37px 59px,83px 127px,0 0,0 0;
-    background-repeat:repeat,repeat,repeat,repeat,repeat-y,repeat-y
+      radial-gradient(circle at 29px 37px,rgba(244,248,255,.14) 0 .65px,transparent 1px),
+      radial-gradient(circle at 103px 151px,rgba(190,215,250,.1) 0 .7px,transparent 1.05px),
+      radial-gradient(circle at 223px 89px,rgba(255,235,204,.085) 0 .7px,transparent 1.1px);
+    background-size:181px 229px,271px 347px,397px 503px;
+    background-position:0 0,41px 63px,87px 131px
   }
   /* 100lvh usa l'altezza massima stabile del webview: l'apertura della
      barra di Telegram non lascia scoperto il bordo del campo stellare. */
@@ -2557,6 +2552,7 @@ let sezioniTimeline = [], segmentiRibbon = [], intestazioniEpoche = [];
 let metricheSezioni = [], metricheTimelineAttese = false;
 let osservatoreDimensioni = null;
 let osservatoreCopertine = null;
+let sospendiCaricamentoCopertine = false;
 let altezzaBarra = 0;
 
 function aggiornaPulsantiFiltro(){
@@ -2568,10 +2564,14 @@ function aggiornaPulsantiFiltro(){
    timeline gia' all'avvio. Conservare l'URL in data-src ci permette invece
    di caricare soltanto le immagini vicine allo schermo. */
 function caricaCopertina(im){
-  if(!im?.dataset.src) return;
+  if(!im?.dataset.src || im.dataset.loaded === "1") return;
+  im.dataset.loaded = "1";
   im.src = im.dataset.src;
-  delete im.dataset.src;
-  osservatoreCopertine?.unobserve(im);
+}
+function scaricaCopertina(im){
+  if(!im || im.dataset.loaded !== "1") return;
+  delete im.dataset.loaded;
+  im.removeAttribute("src");
 }
 function preparaCaricamentoCopertine(){
   osservatoreCopertine?.disconnect();
@@ -2582,20 +2582,28 @@ function preparaCaricamentoCopertine(){
     return;
   }
   osservatoreCopertine = new IntersectionObserver(entries=>{
+    if(sospendiCaricamentoCopertine) return;
     entries.forEach(entry=>{
-      if(!entry.isIntersecting) return;
-      const visibileOra = entry.boundingClientRect.bottom >= -80
-        && entry.boundingClientRect.top <= innerHeight+80;
-      entry.target.setAttribute("fetchpriority",visibileOra ? "high" : "low");
-      caricaCopertina(entry.target);
+      if(entry.isIntersecting){
+        const visibileOra = entry.boundingClientRect.bottom >= -80
+          && entry.boundingClientRect.top <= innerHeight+80;
+        entry.target.setAttribute("fetchpriority",visibileOra ? "high" : "low");
+        caricaCopertina(entry.target);
+      }else{
+        /* Conserviamo l'indirizzo in data-src, ma liberiamo bitmap e livello
+           grafico delle copertine ormai lontane. Tornando indietro il file
+           viene ripreso dalla cache, senza nuovo peso di rete. */
+        scaricaCopertina(entry.target);
+      }
     });
-  },{rootMargin:vistaMobile.matches ? "650px 0px" : "1400px 0px",threshold:.01});
+  },{rootMargin:vistaMobile.matches ? "900px 0px" : "1000px 0px",threshold:.01});
   immagini.forEach(im=>osservatoreCopertine.observe(im));
 }
-function precaricaCopertine(root,limite=8){
+function precaricaCopertine(root,limite=8,dallaFine=false){
   if(!root) return;
-  [...root.querySelectorAll("img[data-shot][data-src]")]
-    .slice(0,limite).forEach((im,i)=>{
+  const immagini = [...root.querySelectorAll("img[data-shot][data-src]")];
+  const selezione = dallaFine ? immagini.slice(-limite) : immagini.slice(0,limite);
+  selezione.forEach((im,i)=>{
       im.setAttribute("fetchpriority",i < 4 ? "high" : "low");
       caricaCopertina(im);
     });
@@ -3054,12 +3062,15 @@ function aggiornaDopoScrollProtetto(forzaEpoca=false){
 function terminaScrollProtetto(){
   scrollAnimId = null;
   sospendiProgressoEre = false;
+  const riprendiCopertine = sospendiCaricamentoCopertine;
+  sospendiCaricamentoCopertine = false;
   if(scrollSaltoTimer){
     clearTimeout(scrollSaltoTimer);
     scrollSaltoTimer = null;
   }
   jumpTransition.classList.remove("is-visible","is-exiting","verso-alto");
   if(scrollBlocco) scrollBlocco();
+  if(riprendiCopertine) preparaCaricamentoCopertine();
   aggiornaDopoScrollProtetto(true);
 }
 function animaTrattoScroll(startY,targetY,durata,
@@ -3069,6 +3080,12 @@ function animaTrattoScroll(startY,targetY,durata,
   function passo(now){
     const p = Math.min(1,(now-t0)/durata);
     scrollTo(0,Math.round(startY+distanza*easing(p)));
+    /* Lo scroll generato dall'animazione viene aggiornato qui nello stesso
+       fotogramma. Il listener normale lo ignora, evitando una seconda coda
+       requestAnimationFrame concorrente. */
+    aggiornaRibbon();
+    aggiornaBackTop();
+    aggiornaParallasse();
     if(p < 1) scrollAnimId = requestAnimationFrame(passo);
     else alTermine();
   }
@@ -3083,7 +3100,10 @@ function annullaScrollProtetto(){
   }
   jumpTransition.classList.remove("is-visible","is-exiting","verso-alto");
   sospendiProgressoEre = false;
+  const riprendiCopertine = sospendiCaricamentoCopertine;
+  sospendiCaricamentoCopertine = false;
   if(scrollBlocco) scrollBlocco();
+  if(riprendiCopertine) preparaCaricamentoCopertine();
 }
 function scrollaProtetto(el){
   if(!el) return;
@@ -3095,11 +3115,17 @@ function scrollaProtetto(el){
   const distanza = targetY - startY;
   if(Math.abs(distanza) < 2) return;
   sospendiProgressoEre = true;
+  sospendiCaricamentoCopertine = true;
 
   /* Le poche copertine iniziali della destinazione vengono richieste subito,
      mentre l'animazione e' ancora in corso, invece che tutte insieme dopo
      l'arrivo del salto. */
-  precaricaCopertine(el,vistaMobile.matches ? 8 : 5);
+  precaricaCopertine(el,vistaMobile.matches ? 12 : 5);
+  /* Nei salti mobili verso il basso il tratto reale riappare prima del
+     titolo della nuova epoca, attraversando la coda di quella precedente.
+     Prepararne le ultime copertine evita riquadri vuoti durante la dissolvenza. */
+  if(vistaMobile.matches && distanza > 0)
+    precaricaCopertine(el.previousElementSibling,10,true);
 
   const impedisci = e=>e.preventDefault();
   const bloccoTouchCss = vistaMobile.matches && CSS.supports("touch-action","none");
@@ -3553,7 +3579,7 @@ const PIANETI_ATTIVI = false;
    mai, qualunque sia la lunghezza) restando comunque leggerissimo, perche'
    ripetere una texture non costa quasi nulla al browser - a differenza
    delle centinaia di elementi HTML usate in precedenza */
-(function stelle(){
+(function pianificaStelle(){
   const strati = [...document.querySelectorAll("#stelle .layer")];
   /* piastrella piccola e leggera (il peso su schermi mobili viene dalla
      dimensione della texture, non da quante volte si ripete): niente
@@ -3580,7 +3606,13 @@ const PIANETI_ATTIVI = false;
     return `rgba(${n>>16},${n>>8&255},${n&255},${a})`;
   };
 
-  strati.forEach((s,i)=>{
+  const pianifica = cb=>{
+    if("requestIdleCallback" in window)
+      requestIdleCallback(cb,{timeout:1200});
+    else setTimeout(cb,80);
+  };
+  const disegnaStrato = i=>{
+    const s = strati[i];
     const cv = document.createElement("canvas");
     cv.width = TW; cv.height = TH;
     const ctx = cv.getContext("2d");
@@ -3649,7 +3681,12 @@ const PIANETI_ATTIVI = false;
        E' normalmente coperto da #sky, ma su iOS resta dipinto sul documento
        se il compositore sospende per un istante i livelli fissi. */
     if(i === 0) document.documentElement.style.setProperty("--stelle-statiche",texture);
-  });
+    /* Ogni texture viene codificata in un momento libero separato. In questo
+       modo il browser puo' mostrare e usare la pagina prima di preparare i
+       due livelli successivi, senza cambiare il risultato finale. */
+    if(i+1 < strati.length) pianifica(()=>disegnaStrato(i+1));
+  };
+  pianifica(()=>disegnaStrato(0));
 })();
 
 /* ============================ pianeti (parallasse) ====================== */
@@ -3704,9 +3741,10 @@ let aggiornaParallasse = ()=>{};
      il movimento resta comunque fluido finche' sono vicini allo schermo. */
   const CAP_PIANETI = 2600;
   const ALTEZZA_PIASTRELLA_STELLE = 820;
-  const stelleStrati = [...document.querySelectorAll("#stelle .layer")];
-  const ultimePosizioniStelle = stelleStrati.map(()=>"");
-  const pianetiEl = [...document.querySelectorAll("#pianeti .pianeta")];
+  const stelleStrati = [...document.querySelectorAll("#stelle .layer")]
+    .map(el=>({el,depth:Number(el.dataset.depth),ultima:""}));
+  const pianetiEl = [...document.querySelectorAll("#pianeti .pianeta")]
+    .map(el=>({el,depth:Number(el.dataset.depth),base:Number(el.dataset.base)}));
   const intervalloMobile = vistaMobile.matches ? 32 : 0;
   let ultimoAggiornamento = 0, timerParallasse = null;
 
@@ -3729,20 +3767,19 @@ let aggiornaParallasse = ()=>{};
        Lasciarlo entrare nel modulo sposterebbe i livelli verso il basso e
        scoprirebbe temporaneamente il bordo superiore del campo stellare. */
     const y = Math.max(0,scrollY);
-    stelleStrati.forEach((s,i)=>{
-      const depth = parseFloat(s.dataset.depth);
+    stelleStrati.forEach(strato=>{
+      const {el,depth} = strato;
       const t = (y*depth) % ALTEZZA_PIASTRELLA_STELLE;
       const posizione = (-t).toFixed(1);
-      if(posizione === ultimePosizioniStelle[i]) return;
-      ultimePosizioniStelle[i] = posizione;
-      s.style.transform = `translate3d(0,${posizione}px,0)`;
+      if(posizione === strato.ultima) return;
+      strato.ultima = posizione;
+      el.style.transform = `translate3d(0,${posizione}px,0)`;
     });
-    pianetiEl.forEach(s=>{
-      const depth = parseFloat(s.dataset.depth);
-      const base = parseFloat(s.dataset.base);
+    pianetiEl.forEach(pianeta=>{
+      const {el,depth,base} = pianeta;
       const grezzo = Math.max(-CAP_PIANETI, Math.min(CAP_PIANETI, (y-base)*(1-depth)));
       const t = Math.max(-base, Math.min(ALTEZZA_PAGINA-base, grezzo));
-      s.style.transform = `translate3d(0,${t.toFixed(1)}px,0)`;
+      el.style.transform = `translate3d(0,${t.toFixed(1)}px,0)`;
     });
   };
 })();
@@ -3751,6 +3788,7 @@ let aggiornaParallasse = ()=>{};
    listener indipendenti che prima si contendevano layout e composizione. */
 let scrollGeneraleAtteso = false;
 function programmaScrollGenerale(){
+  if(scrollAnimId) return;
   if(scrollGeneraleAtteso) return;
   scrollGeneraleAtteso = true;
   requestAnimationFrame(()=>{
