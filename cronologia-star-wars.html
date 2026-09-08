@@ -188,7 +188,7 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
    agganciati in cima), finche' non restano attaccati alla barra di
    ricerca. Nessuna classe "on/off": tutto e' calc(...) su --p, cosi'
    non c'e' uno scatto quando si scorre piano invece che di colpo.
-   Le colonne (8, larghezza uguale) NON cambiano mai posizione: si
+   Le colonne (9, larghezza uguale) NON cambiano mai posizione: si
    riduce solo l'altezza del contenuto. */
 .ribbon{position:sticky;top:var(--ribbon-gap);z-index:32;margin:32px 0 0;--p:0;
   will-change:transform;transform:translateZ(0)}
@@ -1404,13 +1404,14 @@ document.addEventListener("dragstart", ev=>{
    ========================================================================= */
 
 const ERE = [
-  {id:"vecchia",   nome:"Vecchia Repubblica",      span:"25000 – 1000 BBY", breve:"Vecchia\nRepubblica", c:"#8A94A6"},
+  {id:"vecchia",   nome:"Vecchia Repubblica",      span:"25000 – 1000 BBY", breve:"Vecchia\nRepubblica", c:"#8D79C6"},
   {id:"alta",      nome:"Alta Repubblica",         span:"500 – 100 BBY",   breve:"Alta\nRepubblica", c:"#F0C05A"},
   {id:"caduta",    nome:"Caduta della Repubblica", span:"100 – 19 BBY",     breve:"Caduta della\nRepubblica", c:"#3B6FE0"},
   {id:"impero",    nome:"Regno dell'Impero",       span:"19 – 5 BBY",      breve:"Regno\ndell'Impero", c:"#E23A4E"},
   {id:"ribellione",nome:"Era della Ribellione",    span:"5 BBY – 4 ABY",   breve:"Era della\nRibellione", c:"#E86F4B"},
   {id:"nuova",     nome:"Nuova Repubblica",        span:"4 – 34 ABY",      breve:"Nuova\nRepubblica", c:"#58C08A"},
   {id:"ordine",    nome:"Ascesa del Primo Ordine", span:"34 – 35 ABY",     breve:"Ascesa del\nPrimo Ordine", c:"#E33161"},
+  {id:"jedi",      nome:"Nuovo Ordine Jedi",       span:"35 ABY – futuro", breve:"Nuovo Ordine\nJedi", c:"#E7D9A6", simbolo:"logo new jedi order.webp"},
   {id:"fuori",     nome:"Raccolte Antologiche",    span:"",       breve:"Raccolte\nAntologiche", c:"#4FB3D9"}
 ];
 
@@ -2091,7 +2092,7 @@ const OPERE = [
    n:"Adattamento a fumetti del film L'Ascesa di Skywalker."},
   {ti:"Un Elogio per Snap", y:35, yl:"35 ABY", r:2023, rl:"2023", t:"fumetto", e:"ordine", img:"star-wars-24-ci-vediamo-in-giro-ragazzo.jpg",
    n:"Storia breve dedicata a Temmin \"Snap\" Wexley, ambientata nell'epoca della trilogia sequel."},
-  {ti:"Starfighter", y:40, yl:"40 ABY", r:2027, rl:"2027", t:"film", e:"ordine", img:"starfighter.jpg",
+  {ti:"Starfighter", y:40, yl:"40 ABY", r:2027, rl:"2027", t:"film", e:"jedi", img:"starfighter.jpg",
    n:"Nuovo film di Star Wars ambientato dopo la caduta del Primo Ordine."},
 
   {ti:"Storie dallo Spazio Profondo", y:null, yl:"—", r:2019, rl:"2019", t:"fumetto", e:"fuori", img:"storie-dallo-spazio-profondo.jpg",
@@ -2539,7 +2540,7 @@ function gruppi(){
          l'anno di uscita reale */
       return a.y - b.y;
     });
-  return ERE.map(e=>({id:"epoca-"+e.id, chiave:e.id, label:e.nome, breve:e.breve, sub:e.span, c:e.c,
+  return ERE.map(e=>({id:"epoca-"+e.id, chiave:e.id, simbolo:e.simbolo || e.id+".svg", label:e.nome, breve:e.breve, sub:e.span, c:e.c,
     items:items.filter(o=>o.e === e.id)})).filter(g=>g.items.length);
 }
 
@@ -2632,8 +2633,8 @@ function render(){
 
   ribbon.innerHTML = gs.map(g=>
     `<button class="seg" style="--c:${g.c}"
-      data-go="${g.id}" aria-label="${esc(g.label)}, ${g.items.length} opere">
-      <span class="sigillo${TINTA_SIMBOLI?"":" naturale"}" style="--sig:url('simboli/${g.chiave}.svg')"><img data-sig data-chiave="${g.chiave}" src="simboli/${g.chiave}.svg" alt="" draggable="false"></span>
+      data-go="${g.id}" aria-label="${esc(g.label)}, ${g.items.length} ${g.items.length===1?"opera":"opere"}">
+      <span class="sigillo${TINTA_SIMBOLI?"":" naturale"}" style="--sig:url('simboli/${g.simbolo}')"><img data-sig data-chiave="${g.chiave}" src="simboli/${g.simbolo}" alt="" draggable="false"></span>
       <i></i>
       <span class="dati"><em>${esc(g.breve)}</em><u>${esc(g.sub)}</u></span>
     </button>`).join("");
@@ -2658,7 +2659,7 @@ function render(){
   list.innerHTML = gs.map(g=>`
     <section class="group" id="${g.id}" style="--c:${g.c}">
       <div class="group-head"><h2>
-        <span class="g-sigillo" style="--sig:url('simboli/${g.chiave}.svg')"><img data-sig data-chiave="${g.chiave}" src="simboli/${g.chiave}.svg" alt="" draggable="false"></span>
+        <span class="g-sigillo" style="--sig:url('simboli/${g.simbolo}')"><img data-sig data-chiave="${g.chiave}" src="simboli/${g.simbolo}" alt="" draggable="false"></span>
         ${esc(g.label)}</h2><span class="aurebesh" aria-hidden="true" translate="no">${esc(g.label)}</span><span class="g-date">${esc(g.sub)}</span></div>
       <ul class="items">${lista(g.items)}</ul>
     </section>`).join("");
@@ -2847,7 +2848,7 @@ function aggiornaIngombriSchede(){
   });
 }
 
-/* Le coordinate delle otto epoche cambiano soltanto quando cambia il
+/* Le coordinate delle nove epoche cambiano soltanto quando cambia il
    layout (filtri, ricerca, apertura di una scheda o ridimensionamento),
    non durante il normale scroll. Tenerle in memoria evita letture di
    layout sincrone a ogni fotogramma, particolarmente costose nei webview. */
