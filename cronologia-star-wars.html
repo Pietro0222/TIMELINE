@@ -22,6 +22,7 @@
   --bar-h:0px;
   --ribbon-gap:12px;
   --scroll-header-p:0;
+  --stelle-statiche:none;
   --r:11px;
   --display:"Saira Condensed","Roboto Condensed","Arial Narrow",sans-serif;
   --body:"Barlow","Helvetica Neue",Arial,sans-serif;
@@ -38,19 +39,21 @@ img{
 html{-webkit-text-size-adjust:100%;color-scheme:dark;overscroll-behavior-y:none;
   min-height:100%;background-color:#03050B;
   background-image:
+    var(--stelle-statiche),
     radial-gradient(circle at 23px 31px,rgba(238,244,255,.34) 0 .65px,transparent .95px),
     radial-gradient(circle at 91px 137px,rgba(188,211,246,.24) 0 .7px,transparent 1px),
     radial-gradient(circle at 211px 83px,rgba(255,236,205,.18) 0 .75px,transparent 1.1px);
-  background-size:173px 211px,257px 331px,389px 487px;
-  background-position:0 0,37px 59px,83px 127px}
+  background-size:520px 820px,173px 211px,257px 331px,389px 487px;
+  background-position:0 0,0 0,37px 59px,83px 127px}
 body{
   margin:0;min-height:100%;background-color:var(--bg);
   background-image:
+    var(--stelle-statiche),
     radial-gradient(circle at 23px 31px,rgba(238,244,255,.34) 0 .65px,transparent .95px),
     radial-gradient(circle at 91px 137px,rgba(188,211,246,.24) 0 .7px,transparent 1px),
     radial-gradient(circle at 211px 83px,rgba(255,236,205,.18) 0 .75px,transparent 1.1px);
-  background-size:173px 211px,257px 331px,389px 487px;
-  background-position:0 0,37px 59px,83px 127px;color:var(--ink);
+  background-size:520px 820px,173px 211px,257px 331px,389px 487px;
+  background-position:0 0,0 0,37px 59px,83px 127px;color:var(--ink);
   font-family:var(--body);font-size:16px;line-height:1.5;
   -webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;
 }
@@ -969,23 +972,25 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
 /* sotto i 700px la linea si sposta a sinistra: una colonna sola */
 @media (max-width:700px){
   /* Riserva separata per i WebView iOS: durante il rientro verso la cima
-     WebKit puo' perdere per un fotogramma i livelli fixed complessi. Questo
-     fondale semplice, senza filtri o trasformazioni, sporge anche oltre il
-     viewport e resta nascosto dietro #sky finche' non serve. */
+     WebKit puo' perdere per un fotogramma i livelli fixed complessi. Questa
+     superficie appartiene invece al documento, copre tutta la timeline e
+     non puo' essere sospesa insieme a #sky e #stelle. */
+  body{position:relative;isolation:isolate}
   body::before{
-    content:"";position:fixed;z-index:0;pointer-events:none;
-    top:-40vh;right:0;bottom:-40vh;left:0;
-    top:-40lvh;bottom:-40lvh;
+    content:"";position:absolute;z-index:0;pointer-events:none;
+    inset:0;
     background-color:#03050B;
     background-image:
+      var(--stelle-statiche),
       radial-gradient(circle at 23px 31px,rgba(242,247,255,.42) 0 .65px,transparent .95px),
       radial-gradient(circle at 91px 137px,rgba(193,216,250,.3) 0 .7px,transparent 1px),
       radial-gradient(circle at 211px 83px,rgba(255,237,207,.24) 0 .75px,transparent 1.1px),
       radial-gradient(ellipse 90% 55% at 12% 18%,rgba(38,67,112,.22),transparent 68%),
       linear-gradient(180deg,#080D19 0%,#03050C 48%,#060814 78%,#020308 100%);
-    background-size:173px 211px,257px 331px,389px 487px,auto,auto;
-    background-position:0 0,37px 59px,83px 127px,0 0,0 0;
-    background-repeat:repeat,repeat,repeat,no-repeat,no-repeat
+    background-size:520px 820px,173px 211px,257px 331px,389px 487px,
+      100% max(900px,100lvh),100% max(900px,100lvh);
+    background-position:0 0,0 0,37px 59px,83px 127px,0 0,0 0;
+    background-repeat:repeat,repeat,repeat,repeat,repeat-y,repeat-y
   }
   /* 100lvh usa l'altezza massima stabile del webview: l'apertura della
      barra di Telegram non lascia scoperto il bordo del campo stellare. */
@@ -3581,7 +3586,12 @@ const PIANETI_ATTIVI = false;
       ctx.beginPath();ctx.arc(x,y,nucleo,0,Math.PI*2);ctx.fill();
       ctx.restore();
     }
-    s.style.backgroundImage = `url(${cv.toDataURL()})`;
+    const texture = `url(${cv.toDataURL()})`;
+    s.style.backgroundImage = texture;
+    /* Lo strato piu' lontano diventa anche il fondale statico di sicurezza.
+       E' normalmente coperto da #sky, ma su iOS resta dipinto sul documento
+       se il compositore sospende per un istante i livelli fissi. */
+    if(i === 0) document.documentElement.style.setProperty("--stelle-statiche",texture);
   });
 })();
 
