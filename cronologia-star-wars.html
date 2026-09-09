@@ -997,17 +997,6 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   html,body{background-color:#050914}
   body{position:relative;isolation:isolate}
   body::before{content:none}
-  /* Questa trama appartiene alla timeline che scorre, non al compositore
-     fixed del parallasse. E' volutamente tenue quando il cielo e' presente,
-     ma resta sempre dipinta durante gli scroll inerziali di iOS/Telegram. */
-  .wrap{
-    background-image:
-      radial-gradient(circle at 29px 37px,rgba(244,248,255,.14) 0 .65px,transparent 1px),
-      radial-gradient(circle at 103px 151px,rgba(190,215,250,.1) 0 .7px,transparent 1.05px),
-      radial-gradient(circle at 223px 89px,rgba(255,235,204,.085) 0 .7px,transparent 1.1px);
-    background-size:181px 229px,271px 347px,397px 503px;
-    background-position:0 0,41px 63px,87px 131px
-  }
   /* 100lvh usa l'altezza massima stabile del webview: l'apertura della
      barra di Telegram non lascia scoperto il bordo del campo stellare. */
   @supports (height:100lvh){
