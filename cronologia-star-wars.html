@@ -1011,13 +1011,14 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   }
   /* Telegram su iOS compone gli elementi fixed sotto la propria barra.
      La schermatura superiore e' divisa in una fascia sempre presente e in
-     un'estensione che cresce con transform: l'aspetto resta identico, ma il
-     compositore non deve ridisegnare un grande clip-path a ogni pixel. */
+     un'estensione di altezza FISSA che sfuma in entrata. Non la scaliamo:
+     WebKit puo' conservare una texture sticky con dimensioni errate durante
+     lo scroll inerziale, facendola scendere come una tendina nera. */
   .ribbon::before{
     top:calc(-1*var(--ribbon-gap) - 150px);
     bottom:auto;height:150px;
-    transform:scaleY(var(--mobile-shield-p,0));transform-origin:center bottom;
-    will-change:transform
+    opacity:var(--mobile-shield-p,0);
+    pointer-events:none;will-change:opacity
   }
   .ribbon::after{
     content:"";position:absolute;top:calc(-1*var(--ribbon-gap));bottom:0;
