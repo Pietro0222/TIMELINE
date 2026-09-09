@@ -999,25 +999,32 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
     #sky,#stelle{height:100lvh;bottom:auto}
   }
   /* Telegram su iOS compone gli elementi fixed sotto la propria barra.
-     Estendere verso l'alto lo sfondo dello stesso nastro sticky mantiene
-     invece la copertura nel livello che Telegram mostra correttamente. */
+     La schermatura superiore e' divisa in una fascia sempre presente e in
+     un'estensione che cresce con transform: l'aspetto resta identico, ma il
+     compositore non deve ridisegnare un grande clip-path a ogni pixel. */
   .ribbon::before{
     top:calc(-1*var(--ribbon-gap) - 150px);
-    clip-path:inset(calc(150px - var(--mobile-shield-extra,0px)) 0 0);
-    will-change:clip-path
+    bottom:auto;height:150px;
+    transform:scaleY(var(--mobile-shield-p,0));transform-origin:center bottom;
+    will-change:transform
+  }
+  .ribbon::after{
+    content:"";position:absolute;top:calc(-1*var(--ribbon-gap));bottom:0;
+    left:50%;width:100vw;margin-left:-50vw;z-index:-1;
+    background:rgba(3,5,11,1)
   }
   /* Nello stato compatto l'intero blocco di navigazione perde un altro
      10%, senza modificare l'aspetto iniziale a pagina ferma. */
   .ribbon-track{
-    padding:calc(6px - .6px*var(--scroll-header-p)) 15px;
+    padding:calc(6px - .6px*var(--p)) 15px;
     contain:layout style
   }
   .seg{
-    width:calc(120px - 12px*var(--scroll-header-p));
+    width:calc(120px - 12px*var(--p));
     padding:calc(10.45px*(1 - var(--p)) + 5.13px*var(--p))
-      calc(11.4px - 1.14px*var(--scroll-header-p))
+      calc(11.4px - 1.14px*var(--p))
       calc(11.4px*(1 - var(--p)) + 5.13px*var(--p));
-    border-radius:calc(9.5px - .95px*var(--scroll-header-p));
+    border-radius:calc(9.5px - .95px*var(--p));
     contain:layout style
   }
   .sigillo{
@@ -2559,6 +2566,7 @@ const mobileFiltersClose = document.getElementById("mobileFiltersClose");
 const backTop = document.getElementById("backTop");
 const jumpTransition = document.getElementById("jumpTransition");
 let sezioniTimeline = [], segmentiRibbon = [], intestazioniEpoche = [];
+let primaIntestazioneEpoca = null;
 let metricheSezioni = [], metricheTimelineAttese = false;
 let osservatoreDimensioni = null;
 let osservatoreCopertine = null;
@@ -2644,6 +2652,7 @@ function render(){
     sezioniTimeline = [];
     segmentiRibbon = [];
     intestazioniEpoche = [];
+    primaIntestazioneEpoca = null;
     metricheSezioni = [];
     osservatoreCopertine = null;
     list.innerHTML = state.tipi.size
@@ -2874,6 +2883,7 @@ function spia(gs){
   sezioniTimeline = [...list.querySelectorAll(".group")];
   segmentiRibbon = [...ribbon.querySelectorAll(".seg")];
   intestazioniEpoche = [...list.querySelectorAll(".group-head")];
+  primaIntestazioneEpoca = intestazioniEpoche[0] || null;
   const progressoCorrente = progressoHeaderCorrente.toFixed(4);
   if(vistaMobile.matches){
     intestazioniEpoche.forEach((intestazione,indice)=>
@@ -3118,6 +3128,10 @@ function annullaScrollProtetto(){
 function scrollaProtetto(el){
   if(!el) return;
   annullaScrollProtetto();
+  /* L'overlay usa l'ultima altezza gia' calcolata dell'header. Aggiornarla
+     una volta all'avvio del salto evita una scrittura di stile per ogni
+     fotogramma del normale scorrimento. */
+  jumpTransition.style.setProperty("--bar-h",altezzaBarra.toFixed(2)+"px");
 
   const startY = scrollY;
   const maxY = Math.max(0,document.documentElement.scrollHeight-innerHeight);
@@ -3419,7 +3433,7 @@ const PASSI_MISURA_HEADER = 10;
 let progressoHeaderCorrente = 0;
 let corsaHeader = RIBBON_RANGE;
 let campioniAltezzeHeader = [];
-let ultimoRibbonP = "", ultimoShieldExtra = "", ultimoIngombroHeader = "";
+let ultimoRibbonP = "", ultimoShieldP = "", ultimoIngombroHeader = "";
 
 /* Le dimensioni del nastro e dei controlli dipendono da molte proprieta'
    reali (padding, gap, font e altezze). Leggerne l'offsetHeight subito dopo
@@ -3505,32 +3519,38 @@ function aggiornaIngombroHeader(p,forza=false){
   /* La transizione mobile deve cominciare sotto il nastro e i controlli.
      La variabile globale non viene piu' aggiornata durante lo scroll per
      motivi di fluidita': la passiamo quindi soltanto all'overlay che la usa. */
-  jumpTransition.style.setProperty("--bar-h",altezzaBarra.toFixed(2)+"px");
   const topEpoca = altezzaBarra.toFixed(2)+"px";
   const cimaCompatta = interpolaCampioniHeader("nastro",1) ?? cima;
   const barraCompatta = interpolaCampioniHeader("controlli",1) ?? barra;
   const topEpocaCompatta = (RIBBON_GAP+cimaCompatta+barraCompatta).toFixed(2)+"px";
-  intestazioniEpoche.forEach((intestazione,indice)=>{
-    const top = indice ? topEpocaCompatta : topEpoca;
-    if(intestazione.style.top !== top) intestazione.style.top=top;
-  });
+  /* Durante lo scroll cambia soltanto la prima intestazione: tutte le altre
+     sono gia' nello stato compatto. Evitiamo quindi di attraversare e
+     invalidare l'intera lista delle epoche a ogni fotogramma. */
+  if(primaIntestazioneEpoca && primaIntestazioneEpoca.style.top !== topEpoca)
+    primaIntestazioneEpoca.style.top=topEpoca;
+  if(forza){
+    intestazioniEpoche.slice(1).forEach(intestazione=>{
+      if(intestazione.style.top !== topEpocaCompatta)
+        intestazione.style.top=topEpocaCompatta;
+    });
+    jumpTransition.style.setProperty("--bar-h",altezzaBarra.toFixed(2)+"px");
+  }
 }
 
-function applicaProgressoHeader(pTesto,shieldTesto){
+function applicaProgressoHeader(pTesto,shieldPTesto){
   progressoHeaderCorrente = Number(pTesto);
   /* Le variabili sono assegnate soltanto ai pochi elementi che le usano.
      Prima --scroll-header-p viveva su <html> e ne invalidava inutilmente
      tutta la lunga timeline a ogni pixel di scorrimento. */
   ribbonNav.style.setProperty("--p",pTesto);
-  ribbonNav.style.setProperty("--scroll-header-p",pTesto);
-  ribbonNav.style.setProperty("--mobile-shield-extra",shieldTesto+"px");
+  ribbonNav.style.setProperty("--mobile-shield-p",shieldPTesto);
   if(vistaMobile.matches){
     controls.style.setProperty("--scroll-header-p",pTesto);
     /* Durante la contrazione e' visibile soltanto la prima intestazione.
        Le successive nascono gia' compatte: non serve ricalcolarle tutte a
        ogni fotogramma mentre sono a migliaia di pixel dallo schermo. */
-    intestazioniEpoche.forEach((intestazione,indice)=>
-      intestazione.style.setProperty("--scroll-header-p",indice ? "1" : pTesto));
+    if(primaIntestazioneEpoca)
+      primaIntestazioneEpoca.style.setProperty("--scroll-header-p",pTesto);
   }
   aggiornaIngombroHeader(progressoHeaderCorrente);
 }
@@ -3542,15 +3562,15 @@ function aggiornaRibbon(forza=false){
   /* La barra trasparente di Telegram altera la posizione percepita del
      viewport: la schermatura dipende quindi dallo scroll reale, non dalla
      posizione sticky del nastro. Dopo pochi pixel diventa del tutto opaca. */
-  const shieldExtra = Math.min(150, Math.max(0, window.scrollY/54*150));
-  const pTesto = p.toFixed(4), shieldTesto = shieldExtra.toFixed(1);
+  const shieldP = Math.min(1, Math.max(0, window.scrollY/54));
+  const pTesto = p.toFixed(4), shieldPTesto = shieldP.toFixed(4);
   /* Dopo che il nastro e' completamente compatto questi valori restano
      invariati per quasi tutta la pagina: evita di invalidare stile e
      layout a ogni fotogramma senza alcun cambiamento visivo. */
-  if(!forza && pTesto === ultimoRibbonP && shieldTesto === ultimoShieldExtra) return;
+  if(!forza && pTesto === ultimoRibbonP && shieldPTesto === ultimoShieldP) return;
   ultimoRibbonP = pTesto;
-  ultimoShieldExtra = shieldTesto;
-  applicaProgressoHeader(pTesto,shieldTesto);
+  ultimoShieldP = shieldPTesto;
+  applicaProgressoHeader(pTesto,shieldPTesto);
 }
 aggiornaRibbon(true);
 
