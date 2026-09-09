@@ -803,10 +803,18 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
     display:block;position:fixed;z-index:25;overflow:hidden;
     top:calc(var(--bar-h,0px) + 12px);right:0;bottom:0;left:0;
     opacity:0;visibility:hidden;pointer-events:none;contain:strict;isolation:isolate;
-    background:
-      linear-gradient(90deg,rgba(2,4,9,.99) 0 14%,rgba(5,9,16,.955) 28%,
-        rgba(6,11,19,.95) 74%,rgba(2,4,9,.99) 100%),
-      #020409;
+    /* Il fondale dell'overlay e' realmente opaco: con valori al 95% i
+       riquadri veri rimanevano leggibili sotto quelli simulati, producendo
+       la doppia immagine visibile nei salti tra epoche. Le tre trame minute
+       mantengono invece continuita' con il cielo senza aggiungere elementi. */
+    background-image:
+      radial-gradient(circle at 23px 31px,rgba(242,247,255,.34) 0 .65px,transparent .95px),
+      radial-gradient(circle at 91px 137px,rgba(193,216,250,.24) 0 .7px,transparent 1px),
+      radial-gradient(circle at 211px 83px,rgba(255,237,207,.19) 0 .75px,transparent 1.1px),
+      linear-gradient(90deg,#020409 0 14%,#050910 28%,#060B13 74%,#020409 100%);
+    background-size:173px 211px,257px 331px,389px 487px,auto;
+    background-position:0 0,37px 59px,83px 127px,0 0;
+    background-repeat:repeat,repeat,repeat,no-repeat;
     transition:opacity .22s ease,visibility 0s linear .22s
   }
   .jump-transition::before{
@@ -990,7 +998,7 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   /* 100lvh usa l'altezza massima stabile del webview: l'apertura della
      barra di Telegram non lascia scoperto il bordo del campo stellare. */
   @supports (height:100lvh){
-    #sky,#stelle{height:100lvh;bottom:auto}
+    #stelle{height:100lvh;bottom:auto}
   }
   /* Telegram su iOS compone gli elementi fixed sotto la propria barra.
      La schermatura superiore e' divisa in una fascia sempre presente e in
@@ -1295,6 +1303,15 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
      gia' le stesse velature cromatiche: su WebKit mobile evitiamo quindi i
      livelli duplicati e lasciamo i pannelli con la medesima trasparenza. */
   @supports (-webkit-touch-callout:none){
+    /* Il livello opaco fixed era il responsabile della superficie nera che
+       WebKit trascinava verso il basso durante l'inversione dello scroll.
+       Su iPhone lo stesso cielo viene dipinto come fondale assoluto del
+       documento: resta dietro alle schede, conserva colori e stelle, ma non
+       puo' essere congelato insieme alle barre mobili di Safari/Telegram. */
+    #sky{
+      position:absolute;top:0;right:0;bottom:0;left:0;height:auto;
+      min-height:100lvh;contain:paint;transform:none;backface-visibility:visible
+    }
     /* Le intestazioni delle epoche sono sticky e hanno due sfumature nere
        a piena larghezza. Su WebKit la combinazione contain + layer GPU puo'
        conservare una superficie troppo alta durante l'inversione dello
@@ -3108,6 +3125,11 @@ function animaTrattoScroll(startY,targetY,durata,
        fotogramma. Il listener normale lo ignora, evitando una seconda coda
        requestAnimationFrame concorrente. */
     aggiornaRibbon();
+    /* Il nastro e l'intestazione devono rappresentare l'epoca realmente
+       attraversata anche durante uno scroll avviato dai pulsanti. Tenerli
+       congelati fino all'arrivo faceva comparire insieme il titolo vecchio
+       e quello nuovo, oltre a far lampeggiare il segmento selezionato. */
+    aggiornaProgressoEre(true);
     aggiornaBackTop();
     aggiornaParallasse();
     if(p < 1) scrollAnimId = requestAnimationFrame(passo);
@@ -3204,7 +3226,9 @@ function scrollaProtetto(el){
     scrollSaltoTimer = setTimeout(()=>{
       scrollSaltoTimer = null;
       scrollTo(0,preTargetY);
-      aggiornaDopoScrollProtetto();
+      /* Il trasferimento avviene mentre l'overlay e' completamente visibile:
+         sincronizziamo subito lo stato dell'epoca, prima della dissolvenza. */
+      aggiornaDopoScrollProtetto(true);
       scrollAnimId = requestAnimationFrame(()=>{
         scrollAnimId = requestAnimationFrame(()=>{
           /* Il nastro compatto cambia leggermente l'altezza iniziale della
