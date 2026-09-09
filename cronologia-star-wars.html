@@ -22,7 +22,6 @@
   --bar-h:0px;
   --ribbon-gap:12px;
   --scroll-header-p:0;
-  --stelle-statiche:none;
   --r:11px;
   --display:"Saira Condensed","Roboto Condensed","Arial Narrow",sans-serif;
   --body:"Barlow","Helvetica Neue",Arial,sans-serif;
@@ -34,40 +33,31 @@ img{
 }
 /* Fondale di sicurezza per i browser iOS incorporati. Durante il rimbalzo
    verticale WebKit puo' sospendere per un istante i livelli fixed: queste
-   stelle leggere restano dipinte sul documento e impediscono che affiori
-   una schermata nera uniforme. Normalmente sono coperte da #sky. */
+   velature restano dipinte sul documento e impediscono che affiori una
+   schermata nera uniforme. Non contiene stelle, che appartengono soltanto
+   ai livelli del parallasse. */
 html{-webkit-text-size-adjust:100%;color-scheme:dark;overscroll-behavior-y:none;
   min-height:100%;background-color:#03050B;
   background-image:
-    var(--stelle-statiche),
-    radial-gradient(circle at 23px 31px,rgba(238,244,255,.34) 0 .65px,transparent .95px),
-    radial-gradient(circle at 91px 137px,rgba(188,211,246,.24) 0 .7px,transparent 1px),
-    radial-gradient(circle at 211px 83px,rgba(255,236,205,.18) 0 .75px,transparent 1.1px),
     linear-gradient(180deg,transparent 0%,rgba(31,58,99,.28) 20%,
       transparent 48%,rgba(55,36,82,.17) 75%,transparent 100%),
     linear-gradient(90deg,rgba(31,58,99,.1),transparent 38%,
       transparent 64%,rgba(55,36,82,.08)),
     linear-gradient(180deg,#07101D 0%,#03050C 42%,#060814 72%,#07101D 100%);
-  background-size:520px 820px,173px 211px,257px 331px,389px 487px,
-    100% 1180px,100% 1180px,100% 1180px;
-  background-position:0 0,0 0,37px 59px,83px 127px,0 0,0 0,0 0;
-  background-repeat:repeat,repeat,repeat,repeat,repeat-y,repeat-y,repeat-y}
+  background-size:100% 1180px,100% 1180px,100% 1180px;
+  background-position:0 0,0 0,0 0;
+  background-repeat:repeat-y,repeat-y,repeat-y}
 body{
   margin:0;min-height:100%;background-color:var(--bg);
   background-image:
-    var(--stelle-statiche),
-    radial-gradient(circle at 23px 31px,rgba(238,244,255,.34) 0 .65px,transparent .95px),
-    radial-gradient(circle at 91px 137px,rgba(188,211,246,.24) 0 .7px,transparent 1px),
-    radial-gradient(circle at 211px 83px,rgba(255,236,205,.18) 0 .75px,transparent 1.1px),
     linear-gradient(180deg,transparent 0%,rgba(31,58,99,.28) 20%,
       transparent 48%,rgba(55,36,82,.17) 75%,transparent 100%),
     linear-gradient(90deg,rgba(31,58,99,.1),transparent 38%,
       transparent 64%,rgba(55,36,82,.08)),
     linear-gradient(180deg,#07101D 0%,#03050C 42%,#060814 72%,#07101D 100%);
-  background-size:520px 820px,173px 211px,257px 331px,389px 487px,
-    100% 1180px,100% 1180px,100% 1180px;
-  background-position:0 0,0 0,37px 59px,83px 127px,0 0,0 0,0 0;
-  background-repeat:repeat,repeat,repeat,repeat,repeat-y,repeat-y,repeat-y;
+  background-size:100% 1180px,100% 1180px,100% 1180px;
+  background-position:0 0,0 0,0 0;
+  background-repeat:repeat-y,repeat-y,repeat-y;
   color:var(--ink);
   font-family:var(--body);font-size:16px;line-height:1.5;
   -webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;
@@ -3717,10 +3707,6 @@ const PIANETI_ATTIVI = false;
     }
     const texture = `url(${cv.toDataURL()})`;
     s.style.backgroundImage = texture;
-    /* Lo strato piu' lontano diventa anche il fondale statico di sicurezza.
-       E' normalmente coperto da #sky, ma su iOS resta dipinto sul documento
-       se il compositore sospende per un istante i livelli fissi. */
-    if(i === 0) document.documentElement.style.setProperty("--stelle-statiche",texture);
     /* Ogni texture viene codificata in un momento libero separato. In questo
        modo il browser puo' mostrare e usare la pagina prima di preparare i
        due livelli successivi, senza cambiare il risultato finale. */
