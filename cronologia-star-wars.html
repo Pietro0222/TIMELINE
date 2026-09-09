@@ -6,10 +6,17 @@
 <title>Timeline Canonica</title>
 <meta name="description" content="Timeline interattiva di film, serie, romanzi, fumetti e videogiochi della saga.">
 <meta name="theme-color" content="#03050B">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Saira+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" href="font/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="font/saira-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{font-family:"Barlow";src:url("font/barlow-400.woff2") format("woff2");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"Barlow";src:url("font/barlow-500.woff2") format("woff2");font-style:normal;font-weight:500;font-display:swap}
+@font-face{font-family:"Barlow";src:url("font/barlow-600.woff2") format("woff2");font-style:normal;font-weight:600;font-display:swap}
+@font-face{font-family:"Barlow";src:url("font/barlow-700.woff2") format("woff2");font-style:normal;font-weight:700;font-display:swap}
+@font-face{font-family:"Saira Condensed";src:url("font/saira-condensed-500.woff2") format("woff2");font-style:normal;font-weight:500;font-display:swap}
+@font-face{font-family:"Saira Condensed";src:url("font/saira-condensed-600.woff2") format("woff2");font-style:normal;font-weight:600;font-display:swap}
+@font-face{font-family:"Saira Condensed";src:url("font/saira-condensed-700.woff2") format("woff2");font-style:normal;font-weight:700;font-display:swap}
+@font-face{font-family:"Saira Condensed";src:url("font/saira-condensed-800.woff2") format("woff2");font-style:normal;font-weight:800;font-display:swap}
 :root{
   --bg:#03050B;
   --panel:rgba(9,14,24,.72);
@@ -793,6 +800,7 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
 .back-top span::after{top:9px}
 .jump-transition{display:none}
 .jump-line-fade{display:none}
+.jump-header-snapshot{display:none}
 @media (max-width:700px){
   /* Nei salti molto lunghi il webview non deve ridisegnare tutta la timeline.
      Questa velatura riproduce la linea e le schede in rapido movimento: il
@@ -801,7 +809,7 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
     --timeline-side-pad:20px;
     --timeline-x:calc(var(--timeline-side-pad) + 14px);
     display:block;position:fixed;z-index:25;overflow:hidden;
-    top:calc(var(--bar-h,0px) + 12px);right:0;bottom:0;left:0;
+    top:var(--bar-h,0px);right:0;bottom:0;left:0;
     opacity:0;visibility:hidden;pointer-events:none;contain:strict;isolation:isolate;
     /* Il fondale dell'overlay e' realmente opaco: con valori al 95% i
        riquadri veri rimanevano leggibili sotto quelli simulati, producendo
@@ -874,6 +882,23 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
     opacity:0;pointer-events:none;
     transition:opacity .26s cubic-bezier(.22,.72,.24,1),visibility 0s linear .26s
   }
+  /* Nei WebView iOS un elemento sticky puo' saltare un fotogramma quando
+     sotto di lui avviene il trasferimento istantaneo della pagina. Durante
+     il solo tratto simulato mostriamo una copia visiva gia' composta del
+     nastro e dei comandi: occupa gli stessi pixel, non e' interattiva e
+     viene rimossa prima che torni visibile lo scorrimento reale. */
+  .jump-header-snapshot{
+    display:block;position:fixed;z-index:44;top:0;right:0;left:0;height:0;
+    overflow:hidden;visibility:hidden;opacity:0;pointer-events:none;
+    contain:layout paint style;isolation:isolate;background:#03050B;
+    transform:translateZ(0);backface-visibility:hidden
+  }
+  .jump-header-snapshot.is-visible{visibility:visible;opacity:1}
+  .jump-header-snapshot > .ribbon,
+  .jump-header-snapshot > .controls{
+    position:absolute!important;margin:0!important;transform:translateZ(0)
+  }
+  .jump-header-snapshot .ribbon-track{overscroll-behavior:none}
   /* La parte centrale resta rapida, ma l'ultimo quarto percorre pochi pixel:
      la sagoma arriva allo scroll reale gia' visibilmente rallentata. */
   @keyframes timelineRushDown{
@@ -1054,12 +1079,12 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
     padding:calc(8px - .8px*var(--scroll-header-p))
       calc(15px - 1.5px*var(--scroll-header-p))
   }
-  #mobileSearchToggle{
+  #mobileSearchToggle,.jump-search-toggle{
     position:relative;display:grid;place-items:center;
     flex:0 0 calc(40px - 4px*var(--scroll-header-p));
     width:calc(40px - 4px*var(--scroll-header-p));padding:0
   }
-  #mobileFiltersToggle{position:relative}
+  #mobileFiltersToggle,.jump-filters-toggle{position:relative}
   .search-toggle-icon{
     position:relative;width:14px;height:14px;border:1.8px solid currentColor;
     border-radius:50%;transform:translate(-2px,-2px)
@@ -1072,20 +1097,20 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   .mobile-control-toggle:focus-visible,.mobile-panel-close:focus-visible{
     outline:2px solid var(--ink);outline-offset:2px
   }
-  .controls.ha-ricerca #mobileSearchToggle{
+  .controls.ha-ricerca :is(#mobileSearchToggle,.jump-search-toggle){
     color:var(--ink);border-color:var(--line-strong);
     box-shadow:inset 0 0 9px rgba(148,178,206,.08)
   }
-  .controls.ha-ricerca #mobileSearchToggle::after{
+  .controls.ha-ricerca :is(#mobileSearchToggle,.jump-search-toggle)::after{
     content:"";position:absolute;top:5px;right:5px;width:5px;height:5px;
     border-radius:50%;background:#9DC4E8;
     box-shadow:0 0 7px rgba(157,196,232,.75)
   }
-  .controls.ha-filtri #mobileFiltersToggle{
+  .controls.ha-filtri :is(#mobileFiltersToggle,.jump-filters-toggle){
     color:var(--ink);border-color:var(--line-strong);
     box-shadow:inset 0 0 9px rgba(148,178,206,.08)
   }
-  .controls.ha-filtri #mobileFiltersToggle::after{
+  .controls.ha-filtri :is(#mobileFiltersToggle,.jump-filters-toggle)::after{
     content:"";position:absolute;top:5px;right:5px;width:5px;height:5px;
     border-radius:50%;background:#9DC4E8;
     box-shadow:0 0 7px rgba(157,196,232,.75)
@@ -1142,7 +1167,7 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   .controls.mobile-filters-open:not(.mobile-search-open) .mobile-control-switches{
     grid-column:1
   }
-  .controls.mobile-filters-open:not(.mobile-search-open) #mobileFiltersToggle{
+  .controls.mobile-filters-open:not(.mobile-search-open) :is(#mobileFiltersToggle,.jump-filters-toggle){
     display:none
   }
   .controls.mobile-filters-open:not(.mobile-search-open) .filters-wrap{
@@ -1154,7 +1179,7 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
   .controls.mobile-search-open .mobile-control-switches{
     grid-column:1/-1;grid-row:2
   }
-  .controls.mobile-search-open #mobileSearchToggle{display:none}
+  .controls.mobile-search-open :is(#mobileSearchToggle,.jump-search-toggle){display:none}
   .controls.mobile-search-open.mobile-filters-open .mobile-control-switches{display:none}
   .controls.mobile-search-open.mobile-filters-open .filters-wrap{
     display:flex;grid-column:1/-1;grid-row:2
@@ -1327,6 +1352,8 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
     #sky .neb,#sky .banda,#sky .polvere,#sky .buio{display:none}
     .jump-transition::before,.jump-transition::after{filter:none}
     .jump-transition.is-visible::after{opacity:.78}
+    .jump-header-snapshot > .ribbon,
+    .jump-header-snapshot > .controls{will-change:auto}
   }
 }
 @media (max-width:560px){
@@ -1411,6 +1438,8 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
     <span class="jump-line-fade"></span>
   </div>
 </div>
+
+<div class="jump-header-snapshot" id="jumpHeaderSnapshot" aria-hidden="true"></div>
 
 <button class="back-top" id="backTop" type="button" aria-label="Torna all'inizio">
   <span aria-hidden="true"></span>
@@ -2586,12 +2615,14 @@ const mobileSearchClose = document.getElementById("mobileSearchClose");
 const mobileFiltersClose = document.getElementById("mobileFiltersClose");
 const backTop = document.getElementById("backTop");
 const jumpTransition = document.getElementById("jumpTransition");
+const jumpHeaderSnapshot = document.getElementById("jumpHeaderSnapshot");
 let sezioniTimeline = [], segmentiRibbon = [], intestazioniEpoche = [];
 let primaIntestazioneEpoca = null;
 let metricheSezioni = [], metricheTimelineAttese = false;
 let osservatoreDimensioni = null;
 let osservatoreCopertine = null;
 let sospendiCaricamentoCopertine = false;
+let ripresaCopertineTimer = null;
 let altezzaBarra = 0;
 
 function aggiornaPulsantiFiltro(){
@@ -2613,6 +2644,10 @@ function scaricaCopertina(im){
   im.removeAttribute("src");
 }
 function preparaCaricamentoCopertine(){
+  if(ripresaCopertineTimer){
+    clearTimeout(ripresaCopertineTimer);
+    ripresaCopertineTimer = null;
+  }
   osservatoreCopertine?.disconnect();
   const immagini = [...list.querySelectorAll("img[data-shot][data-src]")];
   if(!immagini.length) return;
@@ -2637,6 +2672,16 @@ function preparaCaricamentoCopertine(){
     });
   },{rootMargin:vistaMobile.matches ? "900px 0px" : "1000px 0px",threshold:.01});
   immagini.forEach(im=>osservatoreCopertine.observe(im));
+}
+function programmaRipresaCopertine(){
+  if(ripresaCopertineTimer) clearTimeout(ripresaCopertineTimer);
+  /* Le immagini della meta sono gia' state precaricate. Riattivare
+     l'osservatore poco dopo l'arrivo evita che centinaia di registrazioni
+     concorrano con l'ultimo fotogramma della transizione. */
+  ripresaCopertineTimer = setTimeout(()=>{
+    ripresaCopertineTimer = null;
+    if(!sospendiCaricamentoCopertine) preparaCaricamentoCopertine();
+  },120);
 }
 function precaricaCopertine(root,limite=8,dallaFine=false){
   if(!root) return;
@@ -3087,6 +3132,8 @@ function ripristinaPosizioneTimeline(posizione){
    girando la rotellina o toccando lo schermo), qui blocchiamo rotellina
    e trascinamento touch finche' l'animazione non e' arrivata a destinazione */
 let scrollAnimId = null, scrollBlocco = null, scrollSaltoTimer = null;
+let headerSnapshotTimer = null;
+let ultimoProgressoAnimazione = 0;
 function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
 function easeInOutQuart(t){
   return t < .5 ? 8*t*t*t*t : 1-Math.pow(-2*t+2,4)/2;
@@ -3100,6 +3147,55 @@ function aggiornaDopoScrollProtetto(forzaEpoca=false){
   aggiornaBackTop();
   aggiornaParallasse();
 }
+/* Crea la copia soltanto quando inizia il tratto finto. Copiare i rettangoli
+   gia' calcolati evita nuovi calcoli dell'header e, soprattutto, sottrae il
+   nastro sticky al salto di composizione che Safari e Telegram mostrano
+   durante il riposizionamento nascosto della pagina. */
+function mostraHeaderDuranteSalto(){
+  if(!vistaMobile.matches || jumpHeaderSnapshot.classList.contains("is-visible")) return;
+  if(headerSnapshotTimer){
+    clearTimeout(headerSnapshotTimer);
+    headerSnapshotTimer = null;
+  }
+  const rNastro = ribbonNav.getBoundingClientRect();
+  const rControlli = controls.getBoundingClientRect();
+  const nastroCopia = ribbonNav.cloneNode(true);
+  const controlliCopia = controls.cloneNode(true);
+  const pulisci = radice=>{
+    radice.querySelector("#mobileSearchToggle")?.classList.add("jump-search-toggle");
+    radice.querySelector("#mobileFiltersToggle")?.classList.add("jump-filters-toggle");
+    radice.removeAttribute("id");
+    radice.querySelectorAll("[id]").forEach(el=>el.removeAttribute("id"));
+    radice.querySelectorAll("button,input,[tabindex]").forEach(el=>
+      el.setAttribute("tabindex","-1"));
+    radice.querySelectorAll(".mobile-pressed").forEach(el=>el.classList.remove("mobile-pressed"));
+  };
+  pulisci(nastroCopia);
+  pulisci(controlliCopia);
+  Object.assign(nastroCopia.style,{
+    top:rNastro.top.toFixed(2)+"px",left:rNastro.left.toFixed(2)+"px",
+    width:rNastro.width.toFixed(2)+"px",height:rNastro.height.toFixed(2)+"px"
+  });
+  Object.assign(controlliCopia.style,{
+    top:rControlli.top.toFixed(2)+"px",left:rControlli.left.toFixed(2)+"px",
+    width:rControlli.width.toFixed(2)+"px",height:rControlli.height.toFixed(2)+"px"
+  });
+  jumpHeaderSnapshot.replaceChildren(nastroCopia,controlliCopia);
+  jumpHeaderSnapshot.style.height = Math.ceil(Math.max(rNastro.bottom,rControlli.bottom))+"px";
+  const tracciaCopia = nastroCopia.querySelector(".ribbon-track");
+  if(tracciaCopia) tracciaCopia.scrollLeft = ribbon.scrollLeft;
+  jumpHeaderSnapshot.classList.add("is-visible");
+}
+function nascondiHeaderDuranteSalto(sincronizza=false){
+  if(headerSnapshotTimer){
+    clearTimeout(headerSnapshotTimer);
+    headerSnapshotTimer = null;
+  }
+  if(sincronizza) aggiornaDopoScrollProtetto(true);
+  jumpHeaderSnapshot.classList.remove("is-visible");
+  jumpHeaderSnapshot.replaceChildren();
+  jumpHeaderSnapshot.style.removeProperty("height");
+}
 function terminaScrollProtetto(){
   scrollAnimId = null;
   sospendiProgressoEre = false;
@@ -3111,8 +3207,9 @@ function terminaScrollProtetto(){
   }
   jumpTransition.classList.remove("is-visible","is-exiting","verso-alto");
   if(scrollBlocco) scrollBlocco();
-  if(riprendiCopertine) preparaCaricamentoCopertine();
+  if(riprendiCopertine) programmaRipresaCopertine();
   aggiornaDopoScrollProtetto(true);
+  nascondiHeaderDuranteSalto();
 }
 function animaTrattoScroll(startY,targetY,durata,
   alTermine=terminaScrollProtetto,easing=easeInOutCubic){
@@ -3129,9 +3226,23 @@ function animaTrattoScroll(startY,targetY,durata,
        attraversata anche durante uno scroll avviato dai pulsanti. Tenerli
        congelati fino all'arrivo faceva comparire insieme il titolo vecchio
        e quello nuovo, oltre a far lampeggiare il segmento selezionato. */
-    aggiornaProgressoEre(true);
-    aggiornaBackTop();
-    aggiornaParallasse();
+    /* Quando la copia stabile copre il nastro, aggiornare nove segmenti
+       invisibili a ogni frame spreca composizione. Li sincronizziamo una
+       sola volta prima di togliere la copia. */
+    if(!jumpHeaderSnapshot.classList.contains("is-visible")
+      && (p === 1 || now-ultimoProgressoAnimazione >= 32)){
+      ultimoProgressoAnimazione = now;
+      aggiornaProgressoEre(true);
+    }
+    const trattoCoperto = jumpTransition.classList.contains("is-visible")
+      && !jumpTransition.classList.contains("is-exiting");
+    /* Sotto un overlay opaco non muoviamo stelle e pulsante flottante:
+       sono invisibili e su iPhone costringerebbero comunque il compositore
+       a ridisegnare tre grandi superfici a ogni fotogramma. */
+    if(!trattoCoperto){
+      aggiornaBackTop();
+      aggiornaParallasse();
+    }
     if(p < 1) scrollAnimId = requestAnimationFrame(passo);
     else alTermine();
   }
@@ -3145,15 +3256,17 @@ function annullaScrollProtetto(){
     scrollSaltoTimer = null;
   }
   jumpTransition.classList.remove("is-visible","is-exiting","verso-alto");
+  nascondiHeaderDuranteSalto();
   sospendiProgressoEre = false;
   const riprendiCopertine = sospendiCaricamentoCopertine;
   sospendiCaricamentoCopertine = false;
   if(scrollBlocco) scrollBlocco();
-  if(riprendiCopertine) preparaCaricamentoCopertine();
+  if(riprendiCopertine) programmaRipresaCopertine();
 }
 function scrollaProtetto(el){
   if(!el) return;
   annullaScrollProtetto();
+  ultimoProgressoAnimazione = 0;
   /* L'overlay usa l'ultima altezza gia' calcolata dell'header. Aggiornarla
      una volta all'avvio del salto evita una scrittura di stile per ogni
      fotogramma del normale scorrimento. */
@@ -3218,9 +3331,11 @@ function scrollaProtetto(el){
   const durataIngresso = 700;
   scrollSaltoTimer = setTimeout(()=>{
     scrollSaltoTimer = null;
+    mostraHeaderDuranteSalto();
     jumpTransition.classList.add("is-visible");
   },Math.round(durataIngresso*.58));
   animaTrattoScroll(startY,ingressoY,durataIngresso,()=>{
+    mostraHeaderDuranteSalto();
     jumpTransition.classList.add("is-visible");
     scrollAnimId = -1;
     scrollSaltoTimer = setTimeout(()=>{
@@ -3230,7 +3345,6 @@ function scrollaProtetto(el){
          sincronizziamo subito lo stato dell'epoca, prima della dissolvenza. */
       aggiornaDopoScrollProtetto(true);
       scrollAnimId = requestAnimationFrame(()=>{
-        scrollAnimId = requestAnimationFrame(()=>{
           /* Il nastro compatto cambia leggermente l'altezza iniziale della
              pagina: ricalcolare qui la meta evita anche pochi pixel di
              sovraelongazione quando il salto parte proprio dall'inizio. */
@@ -3244,12 +3358,17 @@ function scrollaProtetto(el){
           scrollSaltoTimer = setTimeout(()=>{
             scrollSaltoTimer = null;
             jumpTransition.classList.add("is-exiting");
+            /* Sotto la dissolvenza prepariamo lo stato reale dell'header e
+               togliamo la copia quando e' ormai indistinguibile. */
+            headerSnapshotTimer = setTimeout(()=>{
+              headerSnapshotTimer = null;
+              nascondiHeaderDuranteSalto(true);
+            },220);
           },140);
           animaTrattoScroll(partenzaFinale,metaAggiornata,1150,
             terminaScrollProtetto,easeOutSine);
-        });
       });
-    },45);
+    },24);
   },easeInQuad);
 }
 
@@ -3300,6 +3419,7 @@ function impostaControlliMobili({ricerca,filtri,focusRicerca=false}){
 }
 
 mobileSearchToggle.addEventListener("click",()=>{
+  if(scrollAnimId) return;
   /* La ricerca non apre i filtri: se erano gia' visibili, restano tali
      e si spostano sotto; altrimenti rimane il pulsante per aprirli. */
   impostaControlliMobili({
@@ -3307,16 +3427,19 @@ mobileSearchToggle.addEventListener("click",()=>{
   });
 });
 mobileFiltersToggle.addEventListener("click",()=>{
+  if(scrollAnimId) return;
   impostaControlliMobili({
     ricerca:controls.classList.contains("mobile-search-open"),filtri:true
   });
 });
 mobileSearchClose.addEventListener("click",()=>{
+  if(scrollAnimId) return;
   impostaControlliMobili({
     ricerca:false,filtri:controls.classList.contains("mobile-filters-open")
   });
 });
 mobileFiltersClose.addEventListener("click",()=>{
+  if(scrollAnimId) return;
   impostaControlliMobili({
     ricerca:controls.classList.contains("mobile-search-open"),filtri:false
   });
@@ -3324,6 +3447,7 @@ mobileFiltersClose.addEventListener("click",()=>{
 sincronizzaControlliMobili();
 
 backTop.addEventListener("click", ()=>{
+  if(scrollAnimId) return;
   backTop.blur();
   if(matchMedia("(prefers-reduced-motion:reduce)").matches) scrollTo(0,0);
   else scrollaProtetto(document.querySelector(".wrap"));
@@ -3332,6 +3456,13 @@ backTop.addEventListener("click", ()=>{
 document.addEventListener("click", ev=>{
   const t = ev.target.closest("[data-go]");
   if(!t) return;
+  /* Un secondo comando durante il salto riavvierebbe due sequenze di
+     composizione nello stesso istante. L'header resta visibile, ma torna
+     disponibile appena la breve transizione corrente e' terminata. */
+  if(scrollAnimId){
+    ev.preventDefault();
+    return;
+  }
   if(vistaMobile.matches && t.classList.contains("seg")){
     t.classList.add("mobile-pressed");
     setTimeout(()=>t.classList.remove("mobile-pressed"), 240);
