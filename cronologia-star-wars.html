@@ -1295,15 +1295,19 @@ html.scroll-protetto,html.scroll-protetto body{touch-action:none}
      gia' le stesse velature cromatiche: su WebKit mobile evitiamo quindi i
      livelli duplicati e lasciamo i pannelli con la medesima trasparenza. */
   @supports (-webkit-touch-callout:none){
-    /* Su iPhone il fondale opaco fixed puo' essere congelato da WebKit
-       quando le barre del browser cambiano altezza: e' la vera "tendina"
-       nera che resta finche' non si inverte lo scroll. Su iOS usiamo quindi
-       il fondale equivalente gia' dipinto su html/body/.wrap; i tre livelli
-       di #stelle restano fixed e il parallasse non viene modificato. */
-    #sky{display:none}
+    /* Le intestazioni delle epoche sono sticky e hanno due sfumature nere
+       a piena larghezza. Su WebKit la combinazione contain + layer GPU puo'
+       conservare una superficie troppo alta durante l'inversione dello
+       scroll, creando la "tendina" nera. Le intestazioni sono soltanto nove:
+       lasciarle nel normale flusso di composizione e dare alla sfumatura
+       un'altezza esplicita evita il difetto senza cambiare il suo aspetto. */
+    .group,.group-head{contain:none}
+    .group-head{will-change:auto;transform:none}
+    .group-head::before{bottom:auto;height:calc(100% + 55px)}
     .head,.top-panel,.controls::before,.back-top{
       -webkit-backdrop-filter:none!important;backdrop-filter:none!important
     }
+    #sky .neb,#sky .banda,#sky .polvere,#sky .buio{display:none}
     .jump-transition::before,.jump-transition::after{filter:none}
     .jump-transition.is-visible::after{opacity:.78}
   }
